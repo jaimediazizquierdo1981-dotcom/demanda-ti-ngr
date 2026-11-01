@@ -5,7 +5,7 @@ from fastapi import Body, FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from motor.modelo import config_base, ejecutar
+from motor.modelo import _horas_pedido, config_base, ejecutar
 
 STATIC = Path(__file__).resolve().parent / "static"
 app = FastAPI(title="Demanda TI NGR")
@@ -17,11 +17,19 @@ def _salida(o: dict) -> dict:
     personas = []
     for nombre, g in cap.groupby("persona", sort=False):
         f = g.iloc[0]
-        personas.append({"persona": nombre, "squad": f["squad"], "rol": f["rol"],
+        personas.append({"persona": nombre, "squad": f["squad"], "rol": f["rol"], "genero": f["genero"],
                          "meses": g[["mes", "horas_netas", "horas_vacaciones", "horas_gestion"]].to_dict(orient="records")})
     pr = o["proyectos"]
     pr = pr[pr["horas"] > 0].round(1)
+    c = o["config"]
+    pn = o["pronostico"]
+    mezcla = {t: {r["nivel"]: r["mezcla"] for _, r in pn[(pn["tipo"] == t) & (pn["mes"] == 1)].iterrows()}
+              for t in ["requerimiento", "incidencia"]}
+    horas = {t: {n: _horas_pedido(c, t, n) for n in c["horas_por_nivel"][t]} for t in ["requerimiento", "incidencia"]}
     return {
+        "mezcla": mezcla,
+        "horas_pedido": horas,
+        "dispatcher": c.get("dispatcher", {"tasa_rechazo": 0, "motivos": {}}),
         "resumen": o["resumen"].round(2).to_dict(orient="records"),
         "personas": personas,
         "proyectos": pr.to_dict(orient="records"),

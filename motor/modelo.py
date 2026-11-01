@@ -76,6 +76,9 @@ def preparar(cfg: dict | None = None, data_dir: Path = DATA) -> dict:
     eq = pd.DataFrame(c["equipo"])
     eq = eq[eq["incluir"].astype(bool)].copy()
     eq["horas_semana"] = pd.to_numeric(eq["horas_semana"], errors="coerce").fillna(0)
+    eq["genero"] = eq["genero"].fillna("Hombre") if "genero" in eq else "Hombre"
+    if "dispatcher" not in c:
+        c["dispatcher"] = {"tasa_rechazo": 0, "motivos": {}}
     pr = pd.DataFrame(c["proyectos"])
     pr = pr[pr["incluir"].astype(bool)].copy()
     if not crit["proyectos_ti"]:
@@ -128,13 +131,14 @@ def capacidad(ins: dict) -> pd.DataFrame:
             dias_presente = max(0, len(dm) - vm - med)
             filas.append({
                 "mes": m, "persona": per["persona"], "squad": per["squad"], "rol": per["rol"],
+                "genero": per.get("genero", "Hombre"),
                 "dias_utiles": len(dm),
                 "horas_brutas": len(dm) * hdia,
                 "horas_vacaciones": vm * hdia,
                 "horas_descanso_medico": med * hdia,
                 "horas_gestion": dias_presente * hgest,
             })
-    df = pd.DataFrame(filas, columns=["mes", "persona", "squad", "rol", "dias_utiles", "horas_brutas",
+    df = pd.DataFrame(filas, columns=["mes", "persona", "squad", "rol", "genero", "dias_utiles", "horas_brutas",
                                       "horas_vacaciones", "horas_descanso_medico", "horas_gestion"])
     df["horas_netas"] = (df["horas_brutas"] - df["horas_vacaciones"]
                          - df["horas_descanso_medico"] - df["horas_gestion"])

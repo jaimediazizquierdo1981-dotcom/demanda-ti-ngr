@@ -191,7 +191,8 @@ function renderGeneral(){
       [["promedio","Promedio Holt-Winters + Kalman"],["holt_winters","Solo Holt-Winters"],["kalman","Solo filtro de Kalman"]]) +
     campo("demanda.factor_ajuste", "Ajuste de la demanda", "100% = lo que proyecta el modelo. Ej.: 120% si las áreas anticipan más pedidos.", "%", 100, 5) +
     opcion("demanda.estimacion_horas", "Horas por pedido", "Qué valor del rango de horas se usa para cada pedido.",
-      [["peor_escenario","Peor escenario (máximo del rango)"],["promedio","Promedio del rango"]]);
+      [["peor_escenario","Peor escenario (máximo del rango)"],["promedio","Promedio del rango"]]) +
+    campo("dispatcher.tasa_rechazo", "Pedidos rechazados por el dispatcher", "Pedidos adicionales que el robot rechaza (sin VB del power user, no son de data o duplicados). No consumen horas.", "%", 100, 5);
 
   const tablaNivel = (tipo, titulo, etiqueta) => {
     const niv = CFG.horas_por_nivel[tipo];
@@ -215,8 +216,8 @@ function renderGeneral(){
 const TABLAS = {
   equipo: {
     cols: [["incluir","Incluir","chk"],["persona","Persona","text","w-m"],["squad","Squad","sel",null,["Comercial, Supply y Marcas","Finanzas, GDH y Sistemas"]],
-           ["rol","Rol","sel","w-s",["Jefe","Equipo"]],["cargo","Cargo","text"],["horas_semana","Horas/semana","num","w-xs"]],
-    nuevo: () => ({incluir:true, persona:"Nueva persona", squad:"Comercial, Supply y Marcas", rol:"Equipo", cargo:"Analytics Engineer", horas_semana:40}),
+           ["rol","Rol","sel","w-s",["Jefe","Equipo"]],["genero","Género","sel","w-s",["Hombre","Mujer"]],["cargo","Cargo","text"],["horas_semana","Horas/semana","num","w-xs"]],
+    nuevo: () => ({incluir:true, persona:"Nueva persona", squad:"Comercial, Supply y Marcas", rol:"Equipo", genero:"Mujer", cargo:"Analytics Engineer", horas_semana:40}),
   },
   proyectos: {
     cols: [["incluir","Incluir","chk"],["codigo","Código","text","w-xs"],["proyecto","Proyecto","text","w-l"],["tipo","Tipo","sel","w-m",[["Tecnologia","TI"],["Transformacional","Transformacional"]]],

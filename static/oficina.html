@@ -66,6 +66,8 @@
     <span><i style="background:var(--req)"></i>Requerimiento</span>
     <span><i style="background:var(--inc)"></i>Incidencia</span>
     <span>🌴 Vacaciones en el mes</span>
+    <span>Barra bajo cada persona = horas disponibles (bajan con proyectos y cada pedido atendido)</span>
+    <span>⛔ Rechazados por el dispatcher (no consumen horas)</span>
     <span>🧭 Jefe: 2 h/día de gestión</span>
     <span>Escritorio punteado rojo = persona por contratar</span>
     <span>Línea punteada en la barra = 100% de capacidad</span>
@@ -77,13 +79,22 @@ const svg = document.getElementById("ofi");
 const MARCAS = ["Bembos","Popeyes","Chinawok","Don Belisario","Dunkin","Papa John's"];
 const REQ_TXT = ["Necesito un tablero nuevo para {m}","¿Me sacan las ventas por canal de {m}?","Quiero medir la promo de {m}","Necesito el reporte de mermas de {m}","¿Me arman el P&L por tienda de {m}?"];
 const INC_TXT = ["¡No carga el tablero de {m}!","¡Las ventas de {m} no cuadran!","¡Se cayó la interfaz de {m}!","¡El reporte de {m} salió duplicado!"];
+const NO_DATA_TXT = ["Necesito una laptop nueva","Se cayó el WiFi de la tienda de {m}","Quiero acceso a SAP","La impresora de {m} no imprime","Necesito cambiar mi contraseña"];
+const PIEL = ["#f2c9a0","#e0ac7e","#c68a5e","#8d5a3b","#f6d6b8"];
+const PELO = ["#3b2f2a","#1f1a17","#6b4a2e","#a0622d","#2b2b2b","#c9a15a"];
 const fmt = n => Math.round(n).toLocaleString("es-PE");
 const pct = n => Math.round(n*100) + "%";
 const rnd = a => a[Math.floor(Math.random()*a.length)];
+function sortear(pesos){ // {clave: peso} -> clave
+  const t = Object.values(pesos).reduce((a,b)=>a+b,0) || 1; let x = Math.random()*t;
+  for (const [k,w] of Object.entries(pesos)) { if ((x -= w) <= 0) return k; }
+  return Object.keys(pesos)[0];
+}
 
-let D, mes = 1, playing = true, speed = 1, visitors = [], queueGroup, layer, ghostLayer, roomLayer, deskInfo = {};
-const MONTH_MS = 26000;
+let D, mes = 1, playing = true, speed = 1, visitors = [], layer, ghostLayer, roomLayer, waitLayer, rejLayer, deskInfo = {};
+const MONTH_MS = 28000;
 let elapsed = 0, spawned = 0, plan = [], robotBusy = 0;
+let espera = [], rechazados = [];   // personas sentadas (se quedan hasta el cambio de mes)
 
 function el(tag, attrs = {}, parent = layer){
   const e = document.createElementNS(NS, tag);
@@ -97,12 +108,13 @@ function txt(x, y, s, attrs = {}, parent){
 function colorUtil(u){ return u > 1 ? "var(--bad)" : u > .85 ? "var(--warn)" : "var(--ok)"; }
 
 // ---------- Escenario fijo ----------
-const ROBOT = {x:150, y:300};
-const DOOR = {x:20, y:300};
-// Puestos: 6 por squad (2 filas de 3). Las personas ocupan los primeros (jefe primero)
-// y los escritorios "por contratar" ocupan los que quedan libres.
+const ROBOT = {x:160, y:330};
+const DOOR = {x:20, y:330};
 const SLOTS = {1: [], 2: []};
-[[1,120],[1,240],[2,440],[2,560]].forEach(([sq,y]) => [380,530,680].forEach(x => SLOTS[sq].push({x, y, sq})));
+[[1,110],[1,232],[2,430],[2,552]].forEach(([sq,y]) => [380,530,680].forEach(x => SLOTS[sq].push({x, y, sq})));
+const SILLAS_ESPERA = [], SILLAS_RECH = [];
+for (let j=0;j<3;j++) for (let i=0;i<4;i++) SILLAS_ESPERA.push({x:95+i*42, y:528+j*50});
+for (let j=0;j<2;j++) for (let i=0;i<5;i++) SILLAS_RECH.push({x:92+i*34, y:96+j*48});
 let DESKS = {}, GHOSTS = [];
 function squadNum(s){ return /Comercial/i.test(s) ? 1 : 2; }
 function asignarPuestos(){
@@ -120,12 +132,17 @@ function asignarPuestos(){
   }
 }
 
+// Personita: hombre (pelo corto, polo) o mujer (pelo largo, vestido)
 function person(g, x, y, color, opts = {}){
   const p = el("g", {transform:`translate(${x},${y})`}, g);
+  const mujer = opts.mujer, pelo = opts.pelo || "#3b2f2a", piel = opts.piel || "#f2c9a0";
   el("ellipse", {cx:0, cy:16, rx:11, ry:4, fill:"#000", opacity:.10}, p);
-  el("rect", {x:-9, y:-4, width:18, height:20, rx:8, fill:color}, p);
-  el("circle", {cx:0, cy:-12, r:8, fill:"#f2c9a0"}, p);
-  el("path", {d:"M-8,-14 q8,-10 16,0 q-8,-4 -16,0z", fill: opts.hair || "#3b2f2a"}, p);
+  if (mujer) el("path", {d:"M-9.5,-12 a9.5,9.5 0 0 1 19,0 v13 q-4,2 -5,-2 v-6 h-9 v6 q-1,4 -5,2z", fill:pelo}, p);
+  if (mujer) el("path", {d:"M-7,-4 h14 l5,20 q-12,4 -24,0z", fill:color}, p);
+  else el("rect", {x:-9, y:-4, width:18, height:20, rx:8, fill:color}, p);
+  el("circle", {cx:0, cy:-12, r:8, fill:piel}, p);
+  if (mujer) el("path", {d:"M-8.5,-13 q8.5,-12 17,0 q-5,-6 -17,0z", fill:pelo}, p);
+  else el("path", {d:"M-8,-14 q8,-10 16,0 q-8,-4 -16,0z", fill:pelo}, p);
   if (opts.badge) txt(12, -14, opts.badge, {"font-size":12}, p);
   return p;
 }
@@ -133,19 +150,23 @@ function person(g, x, y, color, opts = {}){
 function buildStatic(){
   svg.innerHTML = "";
   const base = el("g", {}, svg);
-  // piso
   el("rect", {x:10, y:10, width:1260, height:680, rx:16, fill:"var(--floor)", stroke:"var(--line)"}, base);
   const pat = el("pattern", {id:"tiles", width:40, height:40, patternUnits:"userSpaceOnUse"}, el("defs", {}, base));
   el("path", {d:"M40 0H0V40", fill:"none", stroke:"#efeae0", "stroke-width":1}, pat);
   el("rect", {x:10, y:10, width:1260, height:680, rx:16, fill:"url(#tiles)"}, base);
   // puerta
-  el("rect", {x:6, y:265, width:12, height:70, rx:3, fill:"var(--wood2)"}, base);
-  txt(14, 352, "Entrada", {"font-size":11, fill:"var(--muted)"}, base);
+  el("rect", {x:6, y:295, width:12, height:70, rx:3, fill:"var(--wood2)"}, base);
+  txt(14, 382, "Entrada", {"font-size":11, fill:"var(--muted)"}, base);
+  // rechazados (arriba del robot)
+  el("rect", {x:60, y:30, width:200, height:165, rx:14, fill:"#f6f6f6", stroke:"#d6d6d6"}, base);
+  txt(160, 50, "⛔ Rechazados", {"text-anchor":"middle", "font-size":12, "font-weight":700}, base);
+  txt(160, 65, "no pasan al equipo de data", {"text-anchor":"middle", "font-size":10.5, fill:"var(--muted)"}, base);
+  SILLAS_RECH.forEach(c => el("rect", {x:c.x-11, y:c.y+8, width:22, height:10, rx:3, fill:"#e4e4e4"}, base));
   // recepción con robot
-  el("rect", {x:70, y:200, width:180, height:200, rx:14, fill:"#fff", stroke:"var(--line)"}, base);
-  txt(155, 222, "Recepción", {"text-anchor":"middle", "font-size":12, "font-weight":700}, base);
-  txt(155, 238, "Dispatcher IA", {"text-anchor":"middle", "font-size":11, fill:"var(--muted)"}, base);
-  el("rect", {x:95, y:330, width:120, height:22, rx:6, fill:"var(--wood)"}, base);
+  el("rect", {x:60, y:215, width:200, height:200, rx:14, fill:"#fff", stroke:"var(--line)"}, base);
+  txt(160, 236, "Recepción · Dispatcher IA", {"text-anchor":"middle", "font-size":12, "font-weight":700}, base);
+  txt(160, 251, "filtra y deriva al jefe del squad", {"text-anchor":"middle", "font-size":10.5, fill:"var(--muted)"}, base);
+  el("rect", {x:100, y:358, width:120, height:20, rx:6, fill:"var(--wood)"}, base);
   const r = el("g", {class:"bob"}, el("g", {transform:`translate(${ROBOT.x},${ROBOT.y})`}, base));
   el("line", {x1:0, y1:-34, x2:0, y2:-44, stroke:"#555", "stroke-width":2}, r);
   el("circle", {cx:0, cy:-46, r:4, fill:"#e0453a", class:"pulse"}, r);
@@ -154,17 +175,17 @@ function buildStatic(){
   el("circle", {cx:-6, cy:-20, r:3, fill:"#6ee7ff"}, r); el("circle", {cx:6, cy:-20, r:3, fill:"#6ee7ff"}, r);
   el("rect", {x:-14, y:-2, width:28, height:22, rx:6, fill:"#c7d1dc", stroke:"#8a97a6"}, r);
   // sala de espera
-  el("rect", {x:60, y:430, width:190, height:240, rx:14, fill:"#fff7f5", stroke:"#f0cfc9"}, base);
-  txt(155, 452, "Sala de espera", {"text-anchor":"middle", "font-size":12, "font-weight":700}, base);
-  txt(155, 468, "pedidos sin capacidad", {"text-anchor":"middle", "font-size":11, fill:"var(--muted)"}, base);
-  for (let i=0;i<4;i++) for (let j=0;j<3;j++) el("rect", {x:82+i*42, y:500+j*52, width:26, height:14, rx:4, fill:"#f0e2de"}, base);
+  el("rect", {x:60, y:440, width:200, height:240, rx:14, fill:"#fff7f5", stroke:"#f0cfc9"}, base);
+  txt(160, 461, "Sala de espera", {"text-anchor":"middle", "font-size":12, "font-weight":700}, base);
+  txt(160, 476, "nadie del squad tiene horas libres", {"text-anchor":"middle", "font-size":10.5, fill:"var(--muted)"}, base);
+  SILLAS_ESPERA.forEach(c => el("rect", {x:c.x-13, y:c.y+8, width:26, height:12, rx:4, fill:"#f0e2de"}, base));
   // zonas squads
   const zone = (y, h, color, name) => {
-    el("rect", {x:300, y, width:470, height:h, rx:16, fill:color, opacity:.06}, base);
-    el("rect", {x:300, y, width:470, height:h, rx:16, fill:"none", stroke:color, "stroke-opacity":.35, "stroke-dasharray":"2 6"}, base);
-    txt(316, y+22, name, {"font-size":12.5, "font-weight":700, fill:color}, base);
+    el("rect", {x:290, y, width:490, height:h, rx:16, fill:color, opacity:.06}, base);
+    el("rect", {x:290, y, width:490, height:h, rx:16, fill:"none", stroke:color, "stroke-opacity":.35, "stroke-dasharray":"2 6"}, base);
+    txt(306, y+20, name, {"font-size":12.5, "font-weight":700, fill:color}, base);
   };
-  zone(30, 290, "var(--sq1)", "Squad Comercial, Supply y Marcas");
+  zone(30, 310, "var(--sq1)", "Squad Comercial, Supply y Marcas");
   zone(350, 330, "var(--sq2)", "Squad Finanzas, GDH y Sistemas");
   // salas de proyecto (vidrio)
   const room = (y, h, name, sub) => {
@@ -173,27 +194,35 @@ function buildStatic(){
     txt(818, y+24, name, {"font-size":13, "font-weight":700}, base);
     txt(818, y+40, sub, {"font-size":11, fill:"var(--muted)"}, base);
   };
-  room(30, 290, "Sala de proyectos de TI", "Horas del equipo comprometidas en el mes");
+  room(30, 310, "Sala de proyectos de TI", "Horas del equipo comprometidas en el mes");
   room(350, 330, "Sala de proyectos transformacionales", "Horas del equipo comprometidas en el mes");
   // capas dinámicas
   roomLayer = el("g", {}, svg);
   ghostLayer = el("g", {}, svg);
   const deskLayer = el("g", {}, svg);
-  queueGroup = el("g", {}, svg);
+  waitLayer = el("g", {}, svg);
+  rejLayer = el("g", {}, svg);
   layer = el("g", {}, svg);
   // escritorios
+  deskInfo = {};
   for (const [nombre, d] of Object.entries(DESKS)) {
     const g = el("g", {}, deskLayer);
     const info = D.personas.find(p => p.persona === nombre) || {rol:"Equipo"};
     el("rect", {x:d.x-55, y:d.y-38, width:110, height:44, rx:7, fill:"var(--wood)", stroke:"var(--wood2)"}, g);
     el("rect", {x:d.x-18, y:d.y-34, width:36, height:20, rx:3, fill:"#2b3240"}, g);
     const screen = el("rect", {x:d.x-15, y:d.y-31, width:30, height:14, rx:2, fill:"#6ee7ff", opacity:.6}, g);
-    const pr = person(g, d.x, d.y+30, d.sq===1 ? "var(--sq1)" : "var(--sq2)", {badge: info.rol==="Jefe" ? "🧭" : ""});
-    txt(d.x, d.y+62, nombre, {"text-anchor":"middle", "font-size":12, "font-weight":600}, g);
-    const sub = txt(d.x, d.y+76, "", {"text-anchor":"middle", "font-size":10.5, fill:"var(--muted)"}, g);
-    const vac = txt(d.x+44, d.y+26, "", {"font-size":16}, g);
+    person(g, d.x, d.y+26, d.sq===1 ? "var(--sq1)" : "var(--sq2)",
+           {badge: info.rol==="Jefe" ? "🧭" : "", mujer: info.genero === "Mujer", pelo: info.genero === "Mujer" ? "#4a2f22" : "#2e2520"});
+    txt(d.x, d.y+56, nombre, {"text-anchor":"middle", "font-size":12, "font-weight":600}, g);
+    const sub = txt(d.x, d.y+69, "", {"text-anchor":"middle", "font-size":10, fill:"var(--muted)"}, g);
+    // barra de horas disponibles
+    el("rect", {x:d.x-45, y:d.y+74, width:90, height:6, rx:3, fill:"#e7e2d8"}, g);
+    const bar = el("rect", {x:d.x-45, y:d.y+74, width:90, height:6, rx:3, fill:"var(--ok)"}, g);
+    const disp = txt(d.x, d.y+92, "", {"text-anchor":"middle", "font-size":10.5, "font-weight":700}, g);
+    const vac = txt(d.x+44, d.y+22, "", {"font-size":16}, g);
     const pile = el("g", {}, g);
-    deskInfo[nombre] = {g, screen, sub, vac, pile, person:pr, tickets:0, rol:info.rol, sq:d.sq};
+    const fx = el("g", {}, g);
+    deskInfo[nombre] = {g, screen, sub, bar, disp, vac, pile, fx, tickets:0, rol:info.rol, sq:d.sq, netas:0, disponible:0};
   }
 }
 
@@ -218,23 +247,48 @@ function renderRooms(){
   [["Tecnologia", 30], ["Transformacional", 350]].forEach(([tipo, y0]) => {
     const ps = D.proyectos.filter(p => p.mes === mes && p.tipo === tipo).sort((a,b)=>b.horas-a.horas);
     const total = ps.reduce((s,p)=>s+p.horas,0);
-    const fte = total / horasPersona;
+    const fte = horasPersona ? total / horasPersona : 0;
     txt(1232, y0+24, fmt(total) + " h", {"text-anchor":"end", "font-size":15, "font-weight":700}, roomLayer);
     txt(1232, y0+40, "≈ " + fte.toFixed(1) + " personas", {"text-anchor":"end", "font-size":11, fill:"var(--muted)"}, roomLayer);
     if (!ps.length) { txt(1025, y0+150, "Sin proyectos con data este mes", {"text-anchor":"middle", "font-size":12, fill:"var(--muted)"}, roomLayer); return; }
     const maxH = Math.max(...D.proyectos.map(p=>p.horas));
-    ps.forEach((p, i) => {
-      const y = y0 + 62 + i*52;
+    ps.slice(0,5).forEach((p, i) => {
+      const y = y0 + 58 + i*50;
       el("rect", {x:818, y, width:414, height:42, rx:8, fill:"#fff", stroke:"#cfe0ee"}, roomLayer);
       txt(830, y+17, p.codigo + " · " + p.proyecto, {"font-size":12, "font-weight":600}, roomLayer);
       el("rect", {x:830, y:y+25, width:300, height:8, rx:4, fill:"#e7eef5"}, roomLayer);
       el("rect", {x:830, y:y+25, width:Math.max(4, 300*p.horas/maxH), height:8, rx:4, fill: tipo==="Tecnologia" ? "#2f6fd6" : "#7c4dd6"}, roomLayer);
       txt(1220, y+33, fmt(p.horas) + " h", {"text-anchor":"end", "font-size":11.5, fill:"var(--muted)"}, roomLayer);
-      // personitas sentadas en la mesa según horas (1 por ~40 h)
       const n = Math.min(5, Math.max(1, Math.round(p.horas/40)));
-      for (let k=0;k<n;k++) el("circle", {cx:1150 + k*0 - n*6 + k*12, cy:y+12, r:4.5, fill: tipo==="Tecnologia" ? "#2f6fd6" : "#7c4dd6", opacity:.75}, roomLayer);
+      for (let k=0;k<n;k++) el("circle", {cx:1150 - n*6 + k*12, cy:y+12, r:4.5, fill: tipo==="Tecnologia" ? "#2f6fd6" : "#7c4dd6", opacity:.75}, roomLayer);
     });
   });
+}
+
+// Horas disponibles de cada persona = horas netas − su parte de los proyectos del mes
+function iniciarDisponibles(){
+  const proyMes = D.proyectos.filter(p => p.mes === mes).reduce((s,p)=>s+p.horas,0);
+  const netas = {};
+  for (const nombre of Object.keys(deskInfo)) {
+    const p = D.personas.find(x => x.persona === nombre);
+    const m = p ? p.meses.find(x => x.mes === mes) : null;
+    netas[nombre] = m ? m.horas_netas : 0;
+  }
+  const totNetas = Object.values(netas).reduce((a,b)=>a+b,0) || 1;
+  for (const [nombre, d] of Object.entries(deskInfo)) {
+    d.netas = netas[nombre];
+    d.proyectos = proyMes * netas[nombre] / totNetas;
+    d.disponible = d.netas - d.proyectos;
+    pintarDisponible(nombre);
+  }
+}
+function pintarDisponible(nombre){
+  const d = deskInfo[nombre];
+  const ratio = d.netas > 0 ? Math.max(0, d.disponible) / d.netas : 0;
+  d.bar.setAttribute("width", (90 * ratio).toFixed(1));
+  d.bar.setAttribute("fill", ratio > .35 ? "var(--ok)" : ratio > .1 ? "var(--warn)" : "var(--bad)");
+  d.disp.textContent = "Disponibles: " + fmt(Math.max(0, d.disponible)) + " h";
+  d.disp.setAttribute("fill", ratio > .1 ? "var(--ink)" : "var(--bad)");
 }
 
 function renderDesks(){
@@ -244,10 +298,11 @@ function renderDesks(){
     const m = p ? p.meses.find(x => x.mes === mes) : null;
     const vacD = m ? Math.round(m.horas_vacaciones / 8) : 0;
     d.vac.textContent = vacD ? "🌴" : "";
-    d.sub.textContent = (vacD ? vacD + " días de vacaciones · " : "") + (m ? fmt(m.horas_netas) + " h netas" : "");
+    d.sub.textContent = (m ? fmt(m.horas_netas) + " h netas" : "") + (vacD ? " · " + vacD + " d vacaciones" : "");
     d.screen.setAttribute("fill", colorUtil(r.utilizacion));
-    d.tickets = 0; d.pile.innerHTML = "";
+    d.tickets = 0; d.pile.innerHTML = ""; d.fx.innerHTML = "";
   }
+  iniciarDisponibles();
 }
 
 function renderGhosts(){
@@ -256,26 +311,32 @@ function renderGhosts(){
   for (let i=0; i<r.personas_adicionales && i<GHOSTS.length; i++){
     const g = GHOSTS[i];
     const gg = el("g", {class:"pulse"}, ghostLayer);
-    el("rect", {x:g.x-55, y:g.y-24, width:110, height:44, rx:7, fill:"#fff", stroke:"var(--bad)", "stroke-width":2, "stroke-dasharray":"6 4"}, gg);
-    txt(g.x, g.y+2, "+1 por contratar", {"text-anchor":"middle", "font-size":12, "font-weight":700, fill:"var(--bad)"}, gg);
-    if (r.alertar_en) txt(g.x, g.y+16, "alertar en " + r.alertar_en, {"text-anchor":"middle", "font-size":10.5, fill:"var(--bad)"}, gg);
+    el("rect", {x:g.x-55, y:g.y-12, width:110, height:44, rx:7, fill:"#fff", stroke:"var(--bad)", "stroke-width":2, "stroke-dasharray":"6 4"}, gg);
+    txt(g.x, g.y+14, "+1 por contratar", {"text-anchor":"middle", "font-size":12, "font-weight":700, fill:"var(--bad)"}, gg);
+    if (r.alertar_en) txt(g.x, g.y+28, "alertar en " + r.alertar_en, {"text-anchor":"middle", "font-size":10.5, fill:"var(--bad)"}, gg);
   }
 }
 
-function renderQueue(){
-  queueGroup.innerHTML = "";
-  const r = rowMes(mes);
-  if (r.brecha_horas >= 0) {
-    txt(155, 640, "Sin cola este mes ✓", {"text-anchor":"middle", "font-size":12, fill:"var(--ok)", "font-weight":600}, queueGroup);
-    return;
-  }
-  const horasPorPedido = r.horas_req_inc_p90 / Math.max(1, r.req_esperados + r.inc_esperadas);
-  const n = Math.min(12, Math.round(-r.brecha_horas / horasPorPedido));
-  for (let k=0;k<n;k++){
-    const i = k % 4, j = Math.floor(k/4);
-    person(queueGroup, 95+i*42, 492+j*52, k%3===0 ? "var(--inc)" : "var(--req)", {hair:"#5a4636"});
-  }
-  txt(155, 662, fmt(-r.brecha_horas) + " h sin capacidad", {"text-anchor":"middle", "font-size":12.5, "font-weight":700, fill:"var(--bad)"}, queueGroup);
+function renderEspera(){
+  waitLayer.innerHTML = "";
+  espera.forEach((v, k) => {
+    if (k < SILLAS_ESPERA.length) person(waitLayer, SILLAS_ESPERA[k].x, SILLAS_ESPERA[k].y, v.tipo==="inc" ? "var(--inc)" : "var(--req)", v.look);
+  });
+  const horas = espera.reduce((s,v)=>s+v.horas,0);
+  if (!espera.length) txt(160, 668, "Sin cola por ahora ✓", {"text-anchor":"middle", "font-size":12, fill:"var(--ok)", "font-weight":600}, waitLayer);
+  else txt(160, 668, espera.length + " pedidos · " + fmt(horas) + " h sin capacidad" + (espera.length > 12 ? " (+" + (espera.length-12) + ")" : ""),
+           {"text-anchor":"middle", "font-size":12, "font-weight":700, fill:"var(--bad)"}, waitLayer);
+}
+
+function renderRechazados(){
+  rejLayer.innerHTML = "";
+  rechazados.forEach((v, k) => {
+    if (k < SILLAS_RECH.length) { const p = person(rejLayer, SILLAS_RECH[k].x, SILLAS_RECH[k].y, "#9aa3ad", v.look); p.setAttribute("opacity", .85); }
+  });
+  const cuenta = {};
+  rechazados.forEach(v => cuenta[v.motivo] = (cuenta[v.motivo]||0)+1);
+  const resumen = Object.entries(cuenta).map(([m,n]) => n + " " + m.replace("Sin VB del power user","sin VB").replace("No es un pedido de data","no data").replace("Pedido duplicado","duplic.")).join(" · ");
+  txt(160, 186, rechazados.length ? resumen : "Ninguno por ahora", {"text-anchor":"middle", "font-size":10.5, fill:"var(--muted)"}, rejLayer);
 }
 
 function buildTimeline(){
@@ -293,54 +354,100 @@ function setMes(m){
   mes = m;
   document.querySelectorAll(".mes").forEach(b => b.classList.toggle("sel", +b.dataset.m === m));
   const r = rowMes(m);
-  renderKpis(r); renderRooms(); renderDesks(); renderGhosts(); renderQueue();
+  renderKpis(r); renderRooms(); renderDesks(); renderGhosts();
   visitors.forEach(v => v.g.remove()); visitors = [];
-  // plan de llegadas del mes: requerimientos e incidencias esperados
+  espera = []; rechazados = []; renderEspera(); renderRechazados();
+  // llegadas del mes: requerimientos e incidencias esperados + rechazados del dispatcher
   const nr = Math.round(r.req_esperados), ni = Math.round(r.inc_esperadas);
-  plan = [...Array(nr).fill("req"), ...Array(ni).fill("inc")].sort(() => Math.random() - .5);
-  spawned = 0; elapsed = 0;
+  const tasa = Math.min(.9, +(D.dispatcher?.tasa_rechazo || 0));
+  const nx = Math.round((nr + ni) * tasa / (1 - tasa));
+  plan = [...Array(nr).fill("req"), ...Array(ni).fill("inc"), ...Array(nx).fill("rech")].sort(() => Math.random() - .5);
+  spawned = 0; elapsed = 0; robotBusy = 0;
 }
 
 // ---------- Visitantes ----------
-function spawn(tipo){
-  const marca = rnd(MARCAS);
-  const nombres = Object.keys(DESKS);
-  if (!nombres.length) return;
-  let sq = Math.random() < .55 ? 1 : 2;
-  if (!nombres.some(n => DESKS[n].sq === sq)) sq = 3 - sq;
-  const miembros = nombres.filter(n => DESKS[n].sq === sq);
-  const jefe = miembros.find(n => deskInfo[n].rol === "Jefe") || miembros[0];
-  const otros = miembros.filter(n => n !== jefe);
-  const asignado = (Math.random() < .15 || !otros.length) ? jefe : rnd(otros);
-  const color = tipo === "inc" ? "var(--inc)" : "var(--req)";
-  const g = el("g", {}, layer);
-  const body = person(g, 0, 0, color, {hair:"#5a4636"});
-  const bubble = el("g", {opacity:0}, g);
-  const inner = el("g", {}, bubble);
-  const msg = (tipo === "inc" ? rnd(INC_TXT) : rnd(REQ_TXT)).replace("{m}", marca);
-  const w = Math.max(120, msg.length * 6.3);
-  // la burbuja se corre a la derecha para no salirse del piso
+function burbuja(g, msg, borde){
+  const inner = el("g", {}, g);
+  const w = Math.max(120, msg.length * 6.2);
   const shift = Math.max(0, w/2 - ROBOT.x + 24);
-  el("rect", {x:-w/2 + shift, y:-58, width:w, height:26, rx:9, fill:"#fff", stroke: tipo==="inc" ? "#f0b4ae" : "#b9cff0"}, inner);
+  el("rect", {x:-w/2 + shift, y:-58, width:w, height:26, rx:9, fill:"#fff", stroke: borde}, inner);
   el("path", {d:"M-5,-33 L0,-26 L5,-33z", fill:"#fff"}, inner);
   txt(shift, -41, msg, {"text-anchor":"middle", "font-size":11.5}, inner);
-  const jd = DESKS[jefe], ad = DESKS[asignado];
-  const v = {g, bubble, tipo, asignado, x:DOOR.x, y:DOOR.y, t:0,
-    path:[
-      {x:ROBOT.x, y:ROBOT.y+78, wait:1500, say:true},
-      {x:jd.x+40, y:jd.y+30, wait:900, say:false, note:"jefe"},
-      {x:ad.x-38, y:ad.y+32, wait:900, say:false, drop:true},
-      {x:DOOR.x-20, y:DOOR.y+10, wait:0}
-    ], i:0, waitUntil:0};
+  return inner;
+}
+
+function spawn(clase){
+  const marca = rnd(MARCAS);
+  const look = {mujer: Math.random() < .5, pelo: rnd(PELO), piel: rnd(PIEL)};
+  const g = el("g", {}, layer);
+  let tipo = clase === "inc" ? "inc" : "req", motivo = null, msg;
+  if (clase === "rech") {
+    motivo = sortear(D.dispatcher?.motivos || {"Sin VB del power user":1});
+    msg = (motivo === "No es un pedido de data" ? rnd(NO_DATA_TXT) : rnd(REQ_TXT)).replace("{m}", marca);
+  } else {
+    msg = (tipo === "inc" ? rnd(INC_TXT) : rnd(REQ_TXT)).replace("{m}", marca);
+  }
+  const color = clase === "rech" ? "#9aa3ad" : tipo === "inc" ? "var(--inc)" : "var(--req)";
+  person(g, 0, 0, color, look);
+  const bubble = el("g", {opacity:0}, g);
+  burbuja(bubble, msg, tipo === "inc" ? "#f0b4ae" : "#b9cff0");
+  const v = {g, bubble, tipo, clase, motivo, look, x:DOOR.x, y:DOOR.y, i:0, waitUntil:0, path:[]};
+  if (clase !== "rech") {
+    const tKey = tipo === "inc" ? "incidencia" : "requerimiento";
+    v.nivel = sortear(D.mezcla[tKey]);
+    v.horas = D.horas_pedido[tKey][v.nivel];
+  }
+  v.path.push({x:ROBOT.x, y:ROBOT.y+60, wait:1500, say:true, accion:"robot"});
   g.setAttribute("transform", `translate(${v.x},${v.y})`);
   visitors.push(v);
 }
 
-function dropTicket(nombre, tipo){
-  const d = deskInfo[nombre], k = d.tickets++;
-  if (k >= 8) return;
-  const p = DESKS[nombre];
-  el("rect", {x:p.x+30, y:p.y-30 - k*4, width:16, height:10, rx:2, fill: tipo==="inc" ? "#f6c6c1" : "#c9dbf6", stroke: tipo==="inc" ? "#e0453a" : "#2f6fd6", "stroke-width":.8}, d.pile);
+// El robot decide: rechaza o deriva al jefe del squad
+function accionRobot(v){
+  if (v.clase === "rech") {
+    const k = rechazados.length + visitors.filter(x => x.destino === "rech").length;
+    const silla = SILLAS_RECH[Math.min(k, SILLAS_RECH.length-1)];
+    v.destino = "rech";
+    v.path.push({x:silla.x, y:silla.y, wait:0, accion:"sentar_rech"});
+    return;
+  }
+  const nombres = Object.keys(DESKS);
+  let sq = Math.random() < .55 ? 1 : 2;
+  if (!nombres.some(n => DESKS[n].sq === sq)) sq = 3 - sq;
+  v.sq = sq;
+  const miembros = nombres.filter(n => DESKS[n].sq === sq);
+  v.jefe = miembros.find(n => deskInfo[n].rol === "Jefe") || miembros[0];
+  const jd = DESKS[v.jefe];
+  v.path.push({x:jd.x+44, y:jd.y+26, wait:800, accion:"jefe"});
+}
+
+// El jefe asigna a quien tenga horas; si nadie en el squad tiene, va a la sala de espera
+function accionJefe(v){
+  const miembros = Object.keys(DESKS).filter(n => DESKS[n].sq === v.sq);
+  const conHoras = miembros.filter(n => deskInfo[n].disponible >= v.horas)
+    .sort((a,b) => (deskInfo[a].rol==="Jefe") - (deskInfo[b].rol==="Jefe") || deskInfo[b].disponible - deskInfo[a].disponible);
+  if (conHoras.length) {
+    v.asignado = conHoras[0];
+    deskInfo[v.asignado].disponible -= v.horas;  // se reserva al asignar
+    const ad = DESKS[v.asignado];
+    v.path.push({x:ad.x-44, y:ad.y+26, wait:800, accion:"entregar"});
+    v.path.push({x:DOOR.x-20, y:DOOR.y+10, wait:0, accion:"salir"});
+  } else {
+    const k = espera.length + visitors.filter(x => x.destino === "espera").length;
+    const silla = SILLAS_ESPERA[Math.min(k, SILLAS_ESPERA.length-1)];
+    v.destino = "espera";
+    v.path.push({x:silla.x, y:silla.y, wait:0, accion:"sentar_espera"});
+  }
+}
+
+function entregar(v){
+  const d = deskInfo[v.asignado], k = d.tickets++;
+  const p = DESKS[v.asignado];
+  if (k < 8) el("rect", {x:p.x+30, y:p.y-30 - k*4, width:16, height:10, rx:2, fill: v.tipo==="inc" ? "#f6c6c1" : "#c9dbf6", stroke: v.tipo==="inc" ? "#e0453a" : "#2f6fd6", "stroke-width":.8}, d.pile);
+  pintarDisponible(v.asignado);
+  // "-30 h" flotando sobre el escritorio
+  const t = txt(p.x, p.y-44, "−" + fmt(v.horas) + " h", {"text-anchor":"middle", "font-size":13, "font-weight":700, fill: v.tipo==="inc" ? "var(--inc)" : "var(--req)"}, d.fx);
+  let y = 0; const iv = setInterval(() => { y -= 1; t.setAttribute("transform", `translate(0,${y})`); t.setAttribute("opacity", 1 + y/30); if (y < -30) { clearInterval(iv); t.remove(); } }, 40);
 }
 
 let last = performance.now();
@@ -348,31 +455,39 @@ function tick(now){
   const raw = now - last, dt = Math.min(50, raw) * speed; last = now;
   if (playing && D) {
     elapsed += Math.min(100, raw) * speed;
-    // llegadas repartidas en el mes
     while (spawned < plan.length && elapsed > (spawned + .5) / plan.length * MONTH_MS * .8) spawn(plan[spawned++]);
-    if (elapsed > MONTH_MS && visitors.length === 0) setMes(mes % 12 + 1);
+    if (elapsed > MONTH_MS && visitors.length === 0) { elapsed = -2500; setTimeout(() => setMes(mes % 12 + 1), 10); }
   }
   for (const v of visitors) {
     if (!playing) break;
-    if (v.showAt && now >= v.showAt && v.waitUntil > now) { v.bubble.setAttribute("opacity", 1); }
+    if (v.showAt && now >= v.showAt && v.waitUntil > now) v.bubble.setAttribute("opacity", 1);
     if (v.waitUntil > now) continue;
-    if (v.showAt) { v.bubble.setAttribute("opacity", 0); v.showAt = 0; }
-    const tgt = v.path[v.i]; if (!tgt) { v.done = true; continue; }
+    if (v.showAt) {
+      v.showAt = 0;
+      if (v.clase === "rech") {  // el robot responde y la persona se va con el motivo
+        v.bubble.innerHTML = "";
+        burbuja(v.bubble, "⛔ Rechazado: " + v.motivo.toLowerCase(), "#e0453a");
+        v.bubble.setAttribute("opacity", 1);
+      } else v.bubble.setAttribute("opacity", 0);
+    }
+    const tgt = v.path[v.i];
+    if (!tgt) { v.done = true; continue; }
     const dx = tgt.x - v.x, dy = tgt.y - v.y, dist = Math.hypot(dx, dy), step = .16 * dt;
     if (dist <= step) {
-      v.x = tgt.x; v.y = tgt.y;
-      if (tgt.say) {
-        // el robot atiende de a uno: si está ocupado, la persona espera su turno
-        const inicio = Math.max(now, robotBusy);
+      v.x = tgt.x; v.y = tgt.y; v.i++;
+      if (tgt.accion === "robot") {
+        const inicio = Math.max(now, robotBusy);   // el robot atiende de a uno
         robotBusy = inicio + tgt.wait / speed;
         v.showAt = inicio; v.waitUntil = robotBusy;
-      } else {
-        v.bubble.setAttribute("opacity", 0);
-        v.waitUntil = now + tgt.wait / speed;
-      }
-      if (tgt.drop) dropTicket(v.asignado, v.tipo);
-      v.i++;
-    } else { v.x += dx / dist * step; v.y += dy / dist * step; if (v.i>0) v.bubble.setAttribute("opacity", 0); }
+        accionRobot(v);
+      } else if (tgt.accion === "jefe") { v.bubble.setAttribute("opacity", 0); v.waitUntil = now + tgt.wait / speed; accionJefe(v); }
+      else if (tgt.accion === "entregar") { v.waitUntil = now + tgt.wait / speed; entregar(v); }
+      else if (tgt.accion === "sentar_espera") { espera.push(v); v.done = true; renderEspera(); }
+      else if (tgt.accion === "sentar_rech") { rechazados.push(v); v.done = true; renderRechazados(); }
+    } else {
+      v.x += dx / dist * step; v.y += dy / dist * step;
+      if (v.clase !== "rech" && v.i > 0) v.bubble.setAttribute("opacity", 0);
+    }
     v.g.setAttribute("transform", `translate(${v.x.toFixed(1)},${v.y.toFixed(1)})`);
   }
   visitors = visitors.filter(v => { if (v.done) { v.g.remove(); return false; } return true; });

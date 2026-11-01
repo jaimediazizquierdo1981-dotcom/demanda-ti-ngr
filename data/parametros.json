@@ -23,8 +23,34 @@
     "estimacion_horas": "peor_escenario"
   },
   "horas_por_nivel": {
-    "requerimiento": {"Alta": [20, 30], "Media": [10, 12], "Baja": [3, 4]},
-    "incidencia": {"Alto": [0.5, 2], "Medio": [2, 8], "Bajo": [4, 24]}
+    "requerimiento": {
+      "Alta": [
+        20,
+        30
+      ],
+      "Media": [
+        10,
+        12
+      ],
+      "Baja": [
+        3,
+        4
+      ]
+    },
+    "incidencia": {
+      "Alto": [
+        0.5,
+        2
+      ],
+      "Medio": [
+        2,
+        8
+      ],
+      "Bajo": [
+        4,
+        24
+      ]
+    }
   },
   "riesgo": {
     "percentil_plan": 90,
@@ -33,5 +59,13 @@
     "objetivo_prob_espera": 0.2,
     "anticipacion_meses": 2,
     "tolerancia_brecha_horas": 0
+  },
+  "dispatcher": {
+    "tasa_rechazo": 0.15,
+    "motivos": {
+      "Sin VB del power user": 0.5,
+      "No es un pedido de data": 0.35,
+      "Pedido duplicado": 0.15
+    }
   }
 }
