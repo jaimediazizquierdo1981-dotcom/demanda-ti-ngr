@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Piso de Data · NGR 2027</title>
+<title>Oficina · Demanda TI NGR</title>
+<link rel="stylesheet" href="/static/comun.css">
 <style>
   :root{
     --bg:#f3f1ec; --ink:#1f2430; --muted:#6b7280; --line:#d9d4c9;
@@ -45,6 +46,8 @@
 </style>
 </head>
 <body>
+<script src="/static/comun.js"></script>
+<script>nav("Oficina")</script>
 <header>
   <div>
     <h1>Piso de Data · NGR 2027</h1>
@@ -96,15 +99,26 @@ function colorUtil(u){ return u > 1 ? "var(--bad)" : u > .85 ? "var(--warn)" : "
 // ---------- Escenario fijo ----------
 const ROBOT = {x:150, y:300};
 const DOOR = {x:20, y:300};
-const DESKS = { // posiciones de cada puesto
-  "Jorge Rios":        {x:380, y:120, sq:1},
-  "Jorge Nuñez":       {x:530, y:120, sq:1},
-  "Luis Chavez":       {x:680, y:120, sq:1},
-  "Jean Pierre Prati": {x:380, y:440, sq:2},
-  "Diana Sebastian":   {x:530, y:440, sq:2},
-  "Omar Llontop":      {x:680, y:440, sq:2},
-};
-const GHOSTS = [{x:530,y:240,sq:1},{x:530,y:560,sq:2},{x:680,y:240,sq:1},{x:680,y:560,sq:2},{x:380,y:240,sq:1},{x:380,y:560,sq:2}];
+// Puestos: 6 por squad (2 filas de 3). Las personas ocupan los primeros (jefe primero)
+// y los escritorios "por contratar" ocupan los que quedan libres.
+const SLOTS = {1: [], 2: []};
+[[1,120],[1,240],[2,440],[2,560]].forEach(([sq,y]) => [380,530,680].forEach(x => SLOTS[sq].push({x, y, sq})));
+let DESKS = {}, GHOSTS = [];
+function squadNum(s){ return /Comercial/i.test(s) ? 1 : 2; }
+function asignarPuestos(){
+  DESKS = {};
+  const libres = {1: [...SLOTS[1]], 2: [...SLOTS[2]]};
+  const orden = [...D.personas].sort((a,b) => (a.rol==="Jefe"?0:1) - (b.rol==="Jefe"?0:1));
+  for (const p of orden) {
+    const sq = squadNum(p.squad); const slot = libres[sq].shift() || libres[3-sq].shift();
+    if (slot) DESKS[p.persona] = {...slot, sq};
+  }
+  GHOSTS = [];
+  for (let i = 0; i < 12 && (libres[1].length || libres[2].length); i++) {
+    const s = (i % 2 === 0 ? libres[1].shift() || libres[2].shift() : libres[2].shift() || libres[1].shift());
+    if (s) GHOSTS.push(s);
+  }
+}
 
 function person(g, x, y, color, opts = {}){
   const p = el("g", {transform:`translate(${x},${y})`}, g);
@@ -175,8 +189,8 @@ function buildStatic(){
     el("rect", {x:d.x-18, y:d.y-34, width:36, height:20, rx:3, fill:"#2b3240"}, g);
     const screen = el("rect", {x:d.x-15, y:d.y-31, width:30, height:14, rx:2, fill:"#6ee7ff", opacity:.6}, g);
     const pr = person(g, d.x, d.y+30, d.sq===1 ? "var(--sq1)" : "var(--sq2)", {badge: info.rol==="Jefe" ? "🧭" : ""});
-    txt(d.x, d.y+66, nombre, {"text-anchor":"middle", "font-size":12, "font-weight":600}, g);
-    const sub = txt(d.x, d.y+81, "", {"text-anchor":"middle", "font-size":10.5, fill:"var(--muted)"}, g);
+    txt(d.x, d.y+62, nombre, {"text-anchor":"middle", "font-size":12, "font-weight":600}, g);
+    const sub = txt(d.x, d.y+76, "", {"text-anchor":"middle", "font-size":10.5, fill:"var(--muted)"}, g);
     const vac = txt(d.x+44, d.y+26, "", {"font-size":16}, g);
     const pile = el("g", {}, g);
     deskInfo[nombre] = {g, screen, sub, vac, pile, person:pr, tickets:0, rol:info.rol, sq:d.sq};
@@ -190,7 +204,7 @@ function renderKpis(r){
   const k = [
     ["Mes", r.mes_nombre + " 2027", ""],
     ["Capacidad neta", fmt(r.horas_netas) + " h", ""],
-    ["Demanda (P90)", fmt(r.demanda_total_plan) + " h", ""],
+    ["Demanda (plan)", fmt(r.demanda_total_plan) + " h", ""],
     ["Brecha", (r.brecha_horas>=0?"+":"") + fmt(r.brecha_horas) + " h", r.brecha_horas<0?"bad":"ok"],
     ["Utilización", pct(r.utilizacion), r.utilizacion>1?"bad":r.utilizacion>.85?"warn":"ok"],
     ["Por contratar", r.personas_adicionales ? "+" + r.personas_adicionales + (r.alertar_en ? " · alerta " + r.alertar_en : "") : "—", r.personas_adicionales?"bad":"ok"],
@@ -200,7 +214,7 @@ function renderKpis(r){
 
 function renderRooms(){
   roomLayer.innerHTML = "";
-  const horasPersona = rowMes(mes).horas_netas / 6;
+  const horasPersona = rowMes(mes).horas_netas / Math.max(1, D.n_personas);
   [["Tecnologia", 30], ["Transformacional", 350]].forEach(([tipo, y0]) => {
     const ps = D.proyectos.filter(p => p.mes === mes && p.tipo === tipo).sort((a,b)=>b.horas-a.horas);
     const total = ps.reduce((s,p)=>s+p.horas,0);
@@ -290,10 +304,14 @@ function setMes(m){
 // ---------- Visitantes ----------
 function spawn(tipo){
   const marca = rnd(MARCAS);
-  const sq = Math.random() < .55 ? 1 : 2;
-  const jefe = Object.entries(DESKS).find(([n,d]) => d.sq===sq && deskInfo[n].rol==="Jefe")[0];
-  const miembros = Object.entries(DESKS).filter(([n,d]) => d.sq===sq).map(([n])=>n);
-  const asignado = Math.random() < .15 ? jefe : rnd(miembros.filter(n => n !== jefe));
+  const nombres = Object.keys(DESKS);
+  if (!nombres.length) return;
+  let sq = Math.random() < .55 ? 1 : 2;
+  if (!nombres.some(n => DESKS[n].sq === sq)) sq = 3 - sq;
+  const miembros = nombres.filter(n => DESKS[n].sq === sq);
+  const jefe = miembros.find(n => deskInfo[n].rol === "Jefe") || miembros[0];
+  const otros = miembros.filter(n => n !== jefe);
+  const asignado = (Math.random() < .15 || !otros.length) ? jefe : rnd(otros);
   const color = tipo === "inc" ? "var(--inc)" : "var(--req)";
   const g = el("g", {}, layer);
   const body = person(g, 0, 0, color, {hair:"#5a4636"});
@@ -364,8 +382,8 @@ function tick(now){
 document.getElementById("play").onclick = e => { playing = !playing; e.target.textContent = playing ? "⏸ Pausa" : "▶ Play"; };
 document.getElementById("vel").onclick = e => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; e.target.textContent = "Velocidad ×" + speed; };
 
-fetch("/api/oficina").then(r => r.json()).then(d => {
-  D = d; buildStatic(); buildTimeline(); setMes(1); requestAnimationFrame(tick);
+calcular().then(d => {
+  D = d; asignarPuestos(); buildStatic(); buildTimeline(); setMes(1); requestAnimationFrame(tick);
 }).catch(() => { document.getElementById("err").style.display = "block"; svg.style.display = "none"; });
 </script>
 </body>

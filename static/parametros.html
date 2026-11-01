@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parámetros · Demanda TI NGR</title>
+<link rel="stylesheet" href="/static/comun.css">
+<style>
+  .wrap{display:grid;grid-template-columns:220px 1fr;gap:20px;padding:18px 24px 110px;max-width:1400px;margin:0 auto}
+  aside{position:sticky;top:64px;align-self:start}
+  aside a{display:block;color:var(--ink);text-decoration:none;padding:7px 10px;border-radius:8px;font-size:13.5px}
+  aside a:hover{background:#e9e5dc}
+  aside small{display:block;color:var(--muted);padding:12px 10px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px;transition:opacity .2s}
+  section.card h2{margin:0 0 2px;font-size:16px;display:flex;align-items:center;gap:8px}
+  section.card h2 .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px}
+  section.card p.d{margin:0 0 14px;color:var(--muted);font-size:12.5px}
+  .off{opacity:.45}
+  .crit{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+  .crit label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:#fcfbf8}
+  .crit label.on{border-color:#9db7e3;background:#f3f7fd}
+  .crit input{margin-top:3px;width:17px;height:17px;accent-color:var(--accent)}
+  .crit b{display:block;font-size:13.5px} .crit span{color:var(--muted);font-size:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px 18px}
+  .f label{display:block;font-size:12.5px;font-weight:600;margin-bottom:4px}
+  .f .h{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .f .in{display:flex;align-items:center;gap:6px}
+  .f .in em{font-style:normal;color:var(--muted);font-size:12px}
+  input[type=number],input[type=text],input[type=date],select{font:inherit;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff;width:100%}
+  input:focus,select:focus{outline:2px solid #9db7e3;border-color:#9db7e3}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th{text-align:left;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:6px;border-bottom:1px solid var(--line);font-weight:600}
+  td{padding:4px 6px;border-bottom:1px solid #f0ece4;vertical-align:middle}
+  td input,td select{padding:5px 6px}
+  td.c{text-align:center} td.c input{width:17px;height:17px;accent-color:var(--accent)}
+  tr.dim td{opacity:.45}
+  .w-l{min-width:240px}.w-xs{width:70px}.w-s{width:95px}.w-m{width:140px}
+  .btn{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
+  .btn:hover{border-color:#999}
+  .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.del{border:none;background:none;color:#b55;font-size:16px;padding:2px 6px}
+  .add{margin-top:10px}
+  .lvl{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .lvl h3{font-size:13.5px;margin:0 0 6px}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 24px;display:flex;align-items:center;gap:12px;z-index:6;box-shadow:0 -4px 16px rgba(0,0,0,.05)}
+  .bar .res{flex:1;display:flex;gap:18px;flex-wrap:wrap;font-size:13px}
+  .bar .res b{font-size:15px}
+  .bar .neg{color:var(--bad)} .bar .pos{color:var(--ok)}
+  .msg{color:var(--muted);font-size:12.5px}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}aside{display:none}.lvl{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<script src="/static/comun.js"></script>
+<script>nav("Parámetros")</script>
+
+<div class="wrap">
+  <aside>
+    <small>Secciones</small>
+    <a href="#sec-crit">1. Criterios del cálculo</a>
+    <a href="#sec-cap">2. Capacidad</a>
+    <a href="#sec-dem">3. Demanda</a>
+    <a href="#sec-niv">4. Horas por complejidad e impacto</a>
+    <a href="#sec-rie">5. Riesgo y alertas</a>
+    <small>Tablas</small>
+    <a href="#sec-eq">6. Equipo</a>
+    <a href="#sec-pr">7. Proyectos</a>
+    <a href="#sec-vac">8. Vacaciones</a>
+    <a href="#sec-fer">9. Feriados</a>
+  </aside>
+
+  <div id="main">
+    <section class="card" id="sec-crit">
+      <h2><span class="n">1</span>Criterios del cálculo</h2>
+      <p class="d">Marca lo que debe considerar el modelo. Si desmarcas un criterio, se ignora en todo el cálculo y su sección queda atenuada.</p>
+      <div class="crit" id="criterios"></div>
+    </section>
+
+    <section class="card" id="sec-cap">
+      <h2><span class="n">2</span>Capacidad</h2>
+      <p class="d">Cuántas horas de ejecución tiene el equipo. Las horas semanales de cada persona se editan en la tabla de Equipo.</p>
+      <div class="grid" id="capacidad"></div>
+    </section>
+
+    <section class="card" id="sec-dem">
+      <h2><span class="n">3</span>Demanda de requerimientos e incidencias</h2>
+      <p class="d">Cómo se proyecta la cantidad de pedidos de 2027 a partir del histórico 2025-2026.</p>
+      <div class="grid" id="demanda"></div>
+    </section>
+
+    <section class="card" id="sec-niv">
+      <h2><span class="n">4</span>Horas por complejidad e impacto</h2>
+      <p class="d">Requerimientos por complejidad y incidencias por impacto al negocio. Con "peor escenario" se usa el máximo; con "promedio del rango", el punto medio.</p>
+      <div class="lvl">
+        <div id="niv-req"></div>
+        <div id="niv-inc"></div>
+      </div>
+    </section>
+
+    <section class="card" id="sec-rie">
+      <h2><span class="n">5</span>Riesgo y alertas</h2>
+      <p class="d">Colchón de variabilidad (Monte Carlo), Erlang C para incidencias y anticipación de la alerta de contratación.</p>
+      <div class="grid" id="riesgo"></div>
+    </section>
+
+    <section class="card" id="sec-eq">
+      <h2><span class="n">6</span>Equipo</h2>
+      <p class="d">Desmarca a alguien para simular su salida, o agrega una persona para simular una contratación.</p>
+      <table id="t-equipo"></table>
+      <button class="btn add" data-add="equipo">+ Agregar persona</button>
+    </section>
+
+    <section class="card" id="sec-pr">
+      <h2><span class="n">7</span>Proyectos</h2>
+      <p class="d">Participación = % de dedicación. Base "equipo" aplica el % sobre todo el equipo; base "persona", sobre un solo recurso.</p>
+      <table id="t-proyectos"></table>
+      <button class="btn add" data-add="proyectos">+ Agregar proyecto</button>
+    </section>
+
+    <section class="card" id="sec-vac">
+      <h2><span class="n">8</span>Vacaciones</h2>
+      <p class="d">Bloques de vacaciones por persona. Solo se descuentan los días útiles dentro de cada rango.</p>
+      <table id="t-vacaciones"></table>
+      <button class="btn add" data-add="vacaciones">+ Agregar bloque</button>
+    </section>
+
+    <section class="card" id="sec-fer">
+      <h2><span class="n">9</span>Feriados 2027</h2>
+      <p class="d">Feriados nacionales de Perú. Desmarca uno para tratarlo como día laborable.</p>
+      <table id="t-feriados"></table>
+      <button class="btn add" data-add="feriados">+ Agregar feriado</button>
+    </section>
+  </div>
+</div>
+
+<div class="bar">
+  <button class="btn pri" id="aplicar">Aplicar y recalcular</button>
+  <button class="btn" id="restaurar">Restaurar valores base</button>
+  <div class="res" id="res"><span class="msg">Cambia lo que necesites y presiona "Aplicar y recalcular".</span></div>
+  <a class="btn" href="/">Ver Resumen</a>
+  <a class="btn" href="/oficina">Ver Oficina</a>
+</div>
+
+<script>
+let CFG = null;
+
+const CRITERIOS = [
+  ["feriados", "Feriados", "Descuenta los feriados nacionales de los días útiles."],
+  ["vacaciones", "Vacaciones", "Descuenta los bloques de vacaciones de cada persona."],
+  ["descansos_medicos", "Descansos médicos", "Descuenta los días de descanso médico estimados por año."],
+  ["gestion_jefes", "Gestión de jefes", "Los jefes dedican parte del día a gestión y no a ejecución."],
+  ["proyectos_ti", "Proyectos de TI", "Incluye las horas comprometidas en proyectos de TI."],
+  ["proyectos_transformacionales", "Proyectos transformacionales", "Incluye las horas comprometidas en proyectos transformacionales."],
+  ["requerimientos", "Requerimientos", "Incluye la demanda proyectada de requerimientos."],
+  ["incidencias", "Incidencias", "Incluye la demanda proyectada de incidencias."],
+  ["colchon_variabilidad", "Colchón de variabilidad", "Reserva horas para meses con más pedidos que el promedio (percentil de plan)."],
+  ["tendencia_y_estacionalidad", "Tendencia y estacionalidad", "Proyecta con Holt-Winters / Kalman. Si se desmarca, usa el promedio histórico plano."],
+];
+
+function get(path){ return path.split(".").reduce((o,k)=>o?.[k], CFG); }
+function set(path, v){
+  const ks = path.split("."); let o = CFG;
+  ks.slice(0,-1).forEach(k => o = o[k]); o[ks.at(-1)] = v;
+}
+
+// Campo numérico ligado a una ruta de la configuración. scale=100 muestra en %.
+function campo(path, label, help, unit = "", scale = 1, step = "any", min = 0){
+  const v = +(get(path) * scale).toFixed(4);
+  return `<div class="f" data-dep="${path}"><label>${label}</label>
+    <div class="in"><input type="number" step="${step}" min="${min}" data-path="${path}" data-scale="${scale}" value="${v}">${unit ? `<em>${unit}</em>` : ""}</div>
+    ${help ? `<div class="h">${help}</div>` : ""}</div>`;
+}
+function opcion(path, label, help, opts){
+  const v = get(path);
+  return `<div class="f"><label>${label}</label>
+    <select data-path="${path}">${opts.map(([k,t]) => `<option value="${k}" ${k===v?"selected":""}>${t}</option>`).join("")}</select>
+    ${help ? `<div class="h">${help}</div>` : ""}</div>`;
+}
+
+function renderGeneral(){
+  document.getElementById("criterios").innerHTML = CRITERIOS.map(([k,t,d]) =>
+    `<label class="${CFG.criterios[k]?"on":""}"><input type="checkbox" data-crit="${k}" ${CFG.criterios[k]?"checked":""}><div><b>${t}</b><span>${d}</span></div></label>`).join("");
+
+  document.getElementById("capacidad").innerHTML =
+    campo("capacidad.horas_por_dia", "Jornada diaria", "Horas por día de una persona a tiempo completo.", "h/día", 1, 0.5) +
+    campo("capacidad.dias_descanso_medico_anual", "Descansos médicos por persona", "Días útiles al año, repartidos en proporción a cada mes.", "días/año", 1, 1) +
+    campo("capacidad.horas_gestion_dia_jefe", "Gestión de cada jefe", "Horas diarias que el jefe dedica a gestión y no a ejecutar.", "h/día", 1, 0.5);
+
+  document.getElementById("demanda").innerHTML =
+    opcion("demanda.metodo", "Método de proyección", "Cómo se proyecta el total mensual de pedidos.",
+      [["promedio","Promedio Holt-Winters + Kalman"],["holt_winters","Solo Holt-Winters"],["kalman","Solo filtro de Kalman"]]) +
+    campo("demanda.factor_ajuste", "Ajuste de la demanda", "100% = lo que proyecta el modelo. Ej.: 120% si las áreas anticipan más pedidos.", "%", 100, 5) +
+    opcion("demanda.estimacion_horas", "Horas por pedido", "Qué valor del rango de horas se usa para cada pedido.",
+      [["peor_escenario","Peor escenario (máximo del rango)"],["promedio","Promedio del rango"]]);
+
+  const tablaNivel = (tipo, titulo, etiqueta) => {
+    const niv = CFG.horas_por_nivel[tipo];
+    return `<h3>${titulo}</h3><table data-dep="${tipo}"><tr><th>${etiqueta}</th><th>Mínimo (h)</th><th>Máximo (h)</th></tr>` +
+      Object.keys(niv).map(n => `<tr><td>${n}</td>
+        <td><input type="number" step="0.5" min="0" data-niv="${tipo}|${n}|0" value="${niv[n][0]}"></td>
+        <td><input type="number" step="0.5" min="0" data-niv="${tipo}|${n}|1" value="${niv[n][1]}"></td></tr>`).join("") + `</table>`;
+  };
+  document.getElementById("niv-req").innerHTML = tablaNivel("requerimiento", "Requerimientos", "Complejidad");
+  document.getElementById("niv-inc").innerHTML = tablaNivel("incidencia", "Incidencias", "Impacto al negocio");
+
+  document.getElementById("riesgo").innerHTML =
+    campo("riesgo.percentil_plan", "Percentil de plan (colchón)", "90 = el equipo queda cubierto 9 de cada 10 meses. 50 = sin colchón.", "P", 1, 5, 50) +
+    campo("riesgo.simulaciones", "Simulaciones Monte Carlo", "Más simulaciones = resultado más estable (y algo más lento).", "", 1, 500, 500) +
+    campo("riesgo.objetivo_prob_espera", "Espera máxima de incidencias (Erlang C)", "Probabilidad aceptada de que una incidencia espere a que alguien se libere.", "%", 100, 5, 1) +
+    campo("riesgo.anticipacion_meses", "Anticipación de la alerta", "Con cuántos meses de anticipación avisar que falta personal.", "meses", 1, 1) +
+    campo("riesgo.tolerancia_brecha_horas", "Tolerancia de brecha", "Brechas menores a este número de horas no generan pedido de personal.", "h/mes", 1, 10);
+}
+
+// ---------- Tablas ----------
+const TABLAS = {
+  equipo: {
+    cols: [["incluir","Incluir","chk"],["persona","Persona","text","w-m"],["squad","Squad","sel",null,["Comercial, Supply y Marcas","Finanzas, GDH y Sistemas"]],
+           ["rol","Rol","sel","w-s",["Jefe","Equipo"]],["cargo","Cargo","text"],["horas_semana","Horas/semana","num","w-xs"]],
+    nuevo: () => ({incluir:true, persona:"Nueva persona", squad:"Comercial, Supply y Marcas", rol:"Equipo", cargo:"Analytics Engineer", horas_semana:40}),
+  },
+  proyectos: {
+    cols: [["incluir","Incluir","chk"],["codigo","Código","text","w-xs"],["proyecto","Proyecto","text","w-l"],["tipo","Tipo","sel","w-m",[["Tecnologia","TI"],["Transformacional","Transformacional"]]],
+           ["inicio","Inicio","date","w-m"],["fin","Fin","date","w-m"],["participacion","Participación %","pct","w-xs"],["base","Base","sel","w-s",[["equipo","Equipo"],["persona","Persona"]]]],
+    nuevo: () => ({incluir:true, codigo:"N"+(CFG.proyectos.length+1), proyecto:"Nuevo proyecto", tipo:"Tecnologia", inicio:"2027-07-01", fin:"2027-11-30", participacion:0.1, base:"equipo"}),
+  },
+  vacaciones: {
+    cols: [["persona","Persona","selp","w-m"],["inicio","Inicio","date","w-m"],["fin","Fin","date","w-m"]],
+    nuevo: () => ({persona: CFG.equipo[0]?.persona || "", inicio:"2027-07-05", fin:"2027-07-19"}),
+  },
+  feriados: {
+    cols: [["incluir","Incluir","chk"],["fecha","Fecha","date","w-m"],["feriado","Feriado","text"]],
+    nuevo: () => ({incluir:true, fecha:"2027-01-02", feriado:"Nuevo feriado"}),
+  },
+};
+
+function celda(tbl, i, [k, , tipo, w, opts]){
+  const v = CFG[tbl][i][k];
+  const a = `data-t="${tbl}" data-i="${i}" data-k="${k}"`;
+  if (tipo === "chk") return `<td class="c"><input type="checkbox" ${a} ${v ? "checked" : ""}></td>`;
+  if (tipo === "num") return `<td><input type="number" step="1" min="0" class="${w||""}" ${a} value="${v}"></td>`;
+  if (tipo === "pct") return `<td><input type="number" step="1" min="0" max="100" class="${w||""}" ${a} data-pct="1" value="${+(v*100).toFixed(2)}"></td>`;
+  if (tipo === "date") return `<td><input type="date" class="${w||""}" ${a} value="${String(v).slice(0,10)}"></td>`;
+  if (tipo === "sel" || tipo === "selp") {
+    const ops = tipo === "selp" ? CFG.equipo.map(e => [e.persona, e.persona]) : opts.map(o => Array.isArray(o) ? o : [o, o]);
+    return `<td><select class="${w||""}" ${a}>${ops.map(([val,t]) => `<option value="${val}" ${val===v?"selected":""}>${t}</option>`).join("")}</select></td>`;
+  }
+  return `<td><input type="text" class="${w||""}" ${a} value="${String(v ?? "").replace(/"/g,"&quot;")}"></td>`;
+}
+
+function renderTabla(tbl){
+  const def = TABLAS[tbl];
+  const filas = CFG[tbl].map((r, i) => {
+    let dim = r.incluir === false;
+    if (tbl === "proyectos") dim = dim || (r.tipo === "Tecnologia" ? !CFG.criterios.proyectos_ti : !CFG.criterios.proyectos_transformacionales);
+    return `<tr class="${dim ? "dim" : ""}">${def.cols.map(c => celda(tbl, i, c)).join("")}<td><button class="btn del" title="Eliminar" data-del="${tbl}" data-i="${i}">✕</button></td></tr>`;
+  }).join("");
+  document.getElementById("t-" + tbl).innerHTML = `<tr>${def.cols.map(c => `<th>${c[1]}</th>`).join("")}<th></th></tr>` + filas;
+}
+
+function atenuar(){
+  const c = CFG.criterios;
+  document.getElementById("sec-vac").classList.toggle("off", !c.vacaciones);
+  document.getElementById("sec-fer").classList.toggle("off", !c.feriados);
+  const dep = (sel, on) => document.querySelectorAll(sel).forEach(e => e.classList.toggle("off", !on));
+  dep('[data-dep="capacidad.dias_descanso_medico_anual"]', c.descansos_medicos);
+  dep('[data-dep="capacidad.horas_gestion_dia_jefe"]', c.gestion_jefes);
+  dep('[data-dep="riesgo.percentil_plan"]', c.colchon_variabilidad);
+  dep('[data-dep="riesgo.simulaciones"]', c.colchon_variabilidad);
+  dep('[data-dep="requerimiento"]', c.requerimientos);
+  document.querySelector('[data-path="demanda.metodo"]').closest(".f").classList.toggle("off", !c.tendencia_y_estacionalidad);
+  document.querySelectorAll('[data-dep="incidencia"]').forEach(e => e.classList.toggle("off", !c.incidencias));
+}
+
+function renderTodo(){
+  renderGeneral(); Object.keys(TABLAS).forEach(renderTabla); atenuar();
+}
+
+// ---------- Eventos ----------
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.crit) {
+    CFG.criterios[t.dataset.crit] = t.checked;
+    t.closest("label").classList.toggle("on", t.checked);
+    Object.keys(TABLAS).forEach(renderTabla); atenuar(); pendiente(); return;
+  }
+  if (t.dataset.path) {
+    const v = t.type === "number" ? (+t.value) / (+t.dataset.scale || 1) : t.value;
+    set(t.dataset.path, v); pendiente(); return;
+  }
+  if (t.dataset.niv) {
+    const [tipo, n, j] = t.dataset.niv.split("|"); CFG.horas_por_nivel[tipo][n][+j] = +t.value; pendiente(); return;
+  }
+  if (t.dataset.t) {
+    const {t: tbl, i, k} = t.dataset;
+    let v = t.type === "checkbox" ? t.checked : t.type === "number" ? +t.value : t.value;
+    if (t.dataset.pct) v = v / 100;
+    const anterior = CFG[tbl][+i][k];
+    CFG[tbl][+i][k] = v;
+    // si cambia el nombre de una persona, se actualizan sus vacaciones
+    if (tbl === "equipo" && k === "persona") CFG.vacaciones.forEach(x => { if (x.persona === anterior) x.persona = v; });
+    if (tbl === "equipo" || k === "incluir" || k === "tipo") Object.keys(TABLAS).forEach(renderTabla);
+    pendiente();
+  }
+});
+document.addEventListener("click", e => {
+  const t = e.target;
+  if (t.dataset.add) { CFG[t.dataset.add].push(TABLAS[t.dataset.add].nuevo()); Object.keys(TABLAS).forEach(renderTabla); pendiente(); }
+  if (t.dataset.del) { CFG[t.dataset.del].splice(+t.dataset.i, 1); Object.keys(TABLAS).forEach(renderTabla); pendiente(); }
+});
+
+function pendiente(){
+  document.getElementById("res").innerHTML = '<span class="msg">Hay cambios sin aplicar.</span>';
+}
+
+async function aplicar(guardar = true){
+  const res = document.getElementById("res");
+  res.innerHTML = '<span class="msg">Calculando…</span>';
+  try {
+    const d = await calcular(CFG);
+    if (guardar) guardarCfg(CFG);
+    const R = d.resumen;
+    const brecha = R.reduce((s,r)=>s+r.brecha_horas,0);
+    const cap = R.reduce((s,r)=>s+r.horas_netas,0), dem = R.reduce((s,r)=>s+r.demanda_total_plan,0);
+    const pico = R.reduce((a,r)=> r.personas_adicionales > a.personas_adicionales ? r : a, R[0]);
+    const deficit = R.filter(r => r.brecha_horas < 0).map(r => r.mes_nombre);
+    res.innerHTML = `
+      <span>Capacidad año <b>${fmtH(cap)} h</b></span>
+      <span>Demanda año <b>${fmtH(dem)} h</b></span>
+      <span>Brecha año <b class="${brecha<0?"neg":"pos"}">${brecha>=0?"+":""}${fmtH(brecha)} h</b></span>
+      <span>Utilización <b>${fmtPct(dem/cap)}</b></span>
+      <span>Pico de contratación <b class="${pico.personas_adicionales?"neg":"pos"}">${pico.personas_adicionales ? "+"+pico.personas_adicionales+" en "+pico.mes_nombre : "ninguno"}</b></span>
+      <span>Meses con déficit <b>${deficit.length ? deficit.join(", ") : "ninguno"}</b></span>`;
+    if (guardar) document.querySelector(".chip-cfg").outerHTML = '<span class="chip-cfg">Parámetros modificados</span>';
+  } catch (err) {
+    res.innerHTML = '<span class="msg" style="color:var(--bad)">No se pudo calcular. Revisa que las fechas y números sean válidos.</span>';
+  }
+}
+
+document.getElementById("aplicar").onclick = aplicar;
+document.getElementById("restaurar").onclick = async () => {
+  if (!confirmarRestaurar()) return;
+  borrarCfg();
+  CFG = await (await fetch("/api/config/base")).json();
+  renderTodo(); await aplicar(false);
+  document.querySelector(".chip-cfg").outerHTML = '<span class="chip-cfg base">Valores base</span>';
+};
+function confirmarRestaurar(){
+  // confirmación en la misma barra, sin ventanas emergentes
+  const b = document.getElementById("restaurar");
+  if (b.dataset.ok) { delete b.dataset.ok; b.textContent = "Restaurar valores base"; return true; }
+  b.dataset.ok = 1; b.textContent = "¿Seguro? Clic otra vez";
+  setTimeout(() => { delete b.dataset.ok; b.textContent = "Restaurar valores base"; }, 4000);
+  return false;
+}
+
+(async () => {
+  const base = await (await fetch("/api/config/base")).json();
+  const guardada = leerCfg();
+  CFG = guardada ? {...base, ...guardada} : base;
+  renderTodo();
+  aplicar(false);
+})();
+</script>
+</body>
+</html>

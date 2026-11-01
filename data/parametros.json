@@ -1,50 +1,37 @@
 {
   "anio_plan": 2027,
-  "horas_por_dia": 8,
-  "anticipacion_meses": 2,
-  "dias_descanso_medico_anual": 5,
+  "criterios": {
+    "feriados": true,
+    "vacaciones": true,
+    "descansos_medicos": true,
+    "gestion_jefes": true,
+    "proyectos_ti": true,
+    "proyectos_transformacionales": true,
+    "requerimientos": true,
+    "incidencias": true,
+    "colchon_variabilidad": true,
+    "tendencia_y_estacionalidad": true
+  },
+  "capacidad": {
+    "horas_por_dia": 8,
+    "dias_descanso_medico_anual": 5,
+    "horas_gestion_dia_jefe": 2
+  },
+  "demanda": {
+    "metodo": "promedio",
+    "factor_ajuste": 1.0,
+    "estimacion_horas": "peor_escenario"
+  },
   "horas_por_nivel": {
-    "requerimiento": {
-      "Alta": [
-        20,
-        30
-      ],
-      "Media": [
-        10,
-        12
-      ],
-      "Baja": [
-        3,
-        4
-      ]
-    },
-    "incidencia": {
-      "Alto": [
-        0.5,
-        2
-      ],
-      "Medio": [
-        2,
-        8
-      ],
-      "Bajo": [
-        4,
-        24
-      ]
-    }
+    "requerimiento": {"Alta": [20, 30], "Media": [10, 12], "Baja": [3, 4]},
+    "incidencia": {"Alto": [0.5, 2], "Medio": [2, 8], "Bajo": [4, 24]}
   },
-  "estimacion": "peor_escenario",
-  "erlang_c": {
-    "objetivo_prob_espera": 0.2,
-    "nota": "Probabilidad máxima aceptada de que una incidencia espere a que alguien se libere"
-  },
-  "monte_carlo": {
-    "simulaciones": 5000,
+  "riesgo": {
     "percentil_plan": 90,
-    "semilla": 2027
-  },
-  "horas_gestion_dia_por_rol": {
-    "Jefe": 2,
-    "Equipo": 0
+    "simulaciones": 5000,
+    "semilla": 2027,
+    "objetivo_prob_espera": 0.2,
+    "anticipacion_meses": 2,
+    "tolerancia_brecha_horas": 0
   }
 }

@@ -10,3 +10,8 @@ Stack: Python + FastAPI, PostgreSQL y frontend HTML/JS, desplegado en Render.
 - `app.py`: API FastAPI (`/`, `/api/resumen`, `/api/pronostico`, `/api/capacidad`).
 
 Ejecutar local: `pip install -r requirements.txt && uvicorn app:app --reload`
+
+## Etapa 2: vistas
+- `/` Resumen: tabla mensual de demanda, capacidad, brecha y personas adicionales.
+- `/oficina`: oficina animada (dispatcher IA, squads, salas de proyectos, sala de espera, escritorios por contratar).
+- `/parametros`: todas las variables y criterios (checks). La configuración se guarda en el navegador de cada usuario y se envía a `POST /api/calcular`.

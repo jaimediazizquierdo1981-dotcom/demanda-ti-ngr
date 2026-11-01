@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resumen · Demanda TI NGR</title>
+<link rel="stylesheet" href="/static/comun.css">
+<style>
+  main{padding:18px 24px 30px;max-width:1500px;margin:0 auto}
+  h1{font-size:20px;margin:0 0 2px} .sub{color:var(--muted);font-size:12.5px;margin-bottom:14px}
+  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 14px;min-width:150px}
+  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .kpi .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+  .kpi.bad .v{color:var(--bad)} .kpi.ok .v{color:var(--ok)}
+  .tbl{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:auto}
+  table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+  th,td{padding:7px 10px;text-align:right;border-bottom:1px solid #f0ece4;white-space:nowrap}
+  th{background:var(--accent);color:#fff;font-weight:600;position:sticky;top:0}
+  td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:inherit}
+  tr{background:#fff}
+  tr.tot{background:#f6f4ef;font-weight:700}
+  tr.sep td{border-top:2px solid var(--line)}
+  td.neg{color:var(--bad);font-weight:700} td.pos{color:var(--ok);font-weight:700}
+  .u{display:inline-block;min-width:44px;padding:2px 6px;border-radius:6px;font-weight:600}
+  .note{color:var(--muted);font-size:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<script src="/static/comun.js"></script>
+<script>nav("Resumen")</script>
+<main>
+  <h1>Demanda vs. capacidad del equipo de data · 2027</h1>
+  <div class="sub">Horas por mes. Datos ficticios. Los criterios y variables se cambian en la pestaña Parámetros.</div>
+  <div class="kpis" id="kpis"></div>
+  <div class="tbl"><table id="t"></table></div>
+  <div class="note" id="note"></div>
+</main>
+<script>
+const M = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+calcular().then(d => {
+  const R = d.resumen;
+  const fila = (lbl, f, cls = "", fmt = fmtH, total = true) => {
+    const vals = R.map(f);
+    const tot = vals.reduce((a,b)=>a+b,0);
+    return `<tr class="${cls}"><td>${lbl}</td>${vals.map(v => `<td class="${cls.includes("brecha") ? (v<0?"neg":"pos") : ""}">${Math.abs(v) < .5 && fmt === fmtH ? "–" : fmt(v)}</td>`).join("")}<td>${total ? fmt(tot) : ""}</td></tr>`;
+  };
+  const util = v => { const c = v > 1 ? "#fbe0e0" : v > .85 ? "#fdf1d8" : "#e3f3ea"; return `<span class="u" style="background:${c}">${fmtPct(v)}</span>`; };
+  const cap = R.reduce((s,r)=>s+r.horas_netas,0), dem = R.reduce((s,r)=>s+r.demanda_total_plan,0);
+  document.getElementById("t").innerHTML =
+    `<tr><th>Concepto</th>${M.map(m=>`<th>${m}</th>`).join("")}<th>Total</th></tr>` +
+    fila("Proyectos TI", r => r.Tecnologia) +
+    fila("Proyectos transformacionales", r => r.Transformacional) +
+    fila("Requerimientos", r => r.horas_req) +
+    fila("Incidencias", r => r.horas_inc) +
+    fila("Colchón de variabilidad (req. + inc.)", r => r.colchon) +
+    fila("Demanda total", r => r.demanda_total_plan, "tot sep") +
+    fila("Capacidad neta", r => r.horas_netas, "tot") +
+    fila("Brecha", r => r.brecha_horas, "tot brecha", v => (v>0?"+":"") + fmtH(v)) +
+    `<tr><td>Utilización</td>${R.map(r=>`<td>${util(r.utilizacion)}</td>`).join("")}<td>${util(dem/cap)}</td></tr>` +
+    `<tr class="tot sep"><td>Personas adicionales</td>${R.map(r=>`<td class="${r.personas_adicionales?"neg":""}">${r.personas_adicionales||"–"}</td>`).join("")}<td></td></tr>` +
+    `<tr><td>Alertar en</td>${R.map(r=>`<td>${r.alertar_en||""}</td>`).join("")}<td></td></tr>` +
+    `<tr><td>Personas mín. para incidencias (Erlang C)</td>${R.map(r=>`<td>${r.personas_min_incidencias}</td>`).join("")}<td></td></tr>`;
+  const brecha = cap - dem;
+  const pico = Math.max(...R.map(r=>r.personas_adicionales));
+  const def = R.filter(r=>r.brecha_horas<0).map(r=>r.mes_nombre);
+  const k = [["Personas en el equipo", d.n_personas, ""],["Capacidad neta año", fmtH(cap)+" h",""],["Demanda año", fmtH(dem)+" h",""],
+             ["Brecha año", (brecha>=0?"+":"")+fmtH(brecha)+" h", brecha<0?"bad":"ok"],["Utilización año", fmtPct(dem/cap), dem>cap?"bad":"ok"],
+             ["Pico por contratar", pico?("+"+pico):"—", pico?"bad":"ok"],["Meses con déficit", def.length?def.length:"0", def.length?"bad":"ok"]];
+  document.getElementById("kpis").innerHTML = k.map(([l,v,c])=>`<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+  document.getElementById("note").textContent = "Personas adicionales = brecha del mes ÷ horas netas promedio por persona, redondeado hacia arriba. Colchón = horas extra para cubrir meses con más pedidos que el promedio (percentil configurado).";
+}).catch(() => { document.getElementById("t").innerHTML = "<tr><td>No se pudo calcular.</td></tr>"; });
+</script>
+</body>
+</html>
