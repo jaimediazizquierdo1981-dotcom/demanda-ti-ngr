@@ -9,7 +9,7 @@
     "proyectos_transformacionales": true,
     "requerimientos": true,
     "incidencias": true,
-    "colchon_variabilidad": true,
+    "colchon_variabilidad": false,
     "tendencia_y_estacionalidad": true,
     "arrastre_pendientes": true
   },
