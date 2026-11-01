@@ -101,6 +101,9 @@ const PELO = ["#3b2f2a","#1f1a17","#6b4a2e","#a0622d","#2b2b2b","#c9a15a"];
 const fmt = n => Math.round(n).toLocaleString("es-PE");
 const pct = n => Math.round(n*100) + "%";
 const rnd = a => a[Math.floor(Math.random()*a.length)];
+// Orden de asignación: incidencias por prioridad (1 = primero) y luego requerimientos
+function prioridad(v){ return v.tipo === "inc" ? (D.prioridad_incidencias?.[v.nivel] ?? 9) : 10; }
+function porPrioridad(a, b){ return prioridad(a) - prioridad(b); }
 function sortear(pesos){ // {clave: peso} -> clave
   const t = Object.values(pesos).reduce((a,b)=>a+b,0) || 1; let x = Math.random()*t;
   for (const [k,w] of Object.entries(pesos)) { if ((x -= w) <= 0) return k; }
@@ -396,6 +399,7 @@ function renderGhosts(){
 
 function renderEspera(){
   waitLayer.innerHTML = "";
+  espera.sort(porPrioridad);
   espera.forEach((v, k) => {
     if (k < SILLAS_ESPERA.length) person(waitLayer, SILLAS_ESPERA[k].x, SILLAS_ESPERA[k].y, v.tipo==="inc" ? "var(--inc)" : "var(--req)", v.look);
   });
@@ -454,7 +458,7 @@ function setMes(m, continuar = false){
   const proyMes = D.proyectos.filter(p => p.mes === m).reduce((t,p)=>t+p.horas,0);
   sim[m] = {reales: 0, atendidas: 0, pendiente: 0, cerrado: false};
   // pendientes del mes anterior: vuelven a pedir atención primero
-  if (arrastre && arrastre.length) arrastre.forEach((v, k) => reingresar(v.tipo, v.horas, v.look, v.sq, k));
+  if (arrastre && arrastre.length) arrastre.sort(porPrioridad).forEach((v, k) => reingresar(v.tipo, v.horas, v.look, v.sq, k, v.nivel));
   else if (!continuar && r.arrastre_entrante > 1) {
     // si se salta a un mes, se parte del pendiente que calcula el modelo
     const prom = Math.max(4, (r.horas_req + r.horas_inc) / Math.max(1, r.req_esperados + r.inc_esperadas));
@@ -471,7 +475,7 @@ function setMes(m, continuar = false){
 }
 
 // Un pendiente del mes anterior sale de la sala de espera y vuelve donde el jefe
-function reingresar(tipo, horas, look, sq, k){
+function reingresar(tipo, horas, look, sq, k, nivel){
   const silla = SILLAS_ESPERA[Math.min(k, SILLAS_ESPERA.length-1)];
   const g = el("g", {}, layer);
   person(g, 0, 0, tipo === "inc" ? "var(--inc)" : "var(--req)", look, "⏳");
@@ -482,7 +486,7 @@ function reingresar(tipo, horas, look, sq, k){
   const miembros = nombres.filter(n => DESKS[n].sq === sq);
   const jefe = miembros.find(n => deskInfo[n].rol === "Jefe") || miembros[0];
   const jd = DESKS[jefe];
-  const v = {g, bubble, tipo, clase: tipo, look, horas, sq, jefe, arrastre: true,
+  const v = {g, bubble, tipo, clase: tipo, look, horas, sq, jefe, nivel, arrastre: true,
              x: silla.x, y: silla.y, i: 0, waitUntil: performance.now() + 300 * k, path: [{x:jd.x+44, y:jd.y+26, wait:600, accion:"jefe"}]};
   g.setAttribute("transform", `translate(${v.x},${v.y})`);
   visitors.push(v);
@@ -523,15 +527,17 @@ function simularMesRapido(m, arrastre){
     res.atendidas += v.horas - falta;
     if (falta > 0.05) pendientes.push({...v, horas: falta});
   };
-  arrastre.forEach(atender);   // primero lo que viene del mes anterior
+  arrastre.sort(porPrioridad).forEach(atender);   // primero lo que viene del mes anterior, por prioridad
+  const llegadas = [];
   const nuevos = [...Array(Math.round(r.req_esperados)).fill("req"), ...Array(Math.round(r.inc_esperadas)).fill("inc")].sort(() => Math.random() - .5);
   nuevos.forEach(tipo => {
     const tKey = tipo === "inc" ? "incidencia" : "requerimiento";
     const nivel = sortear(D.mezcla[tKey]);
-    const v = {tipo, horas: D.horas_pedido[tKey][nivel], look: lookAleatorio(), sq: Math.random() < .55 ? 1 : 2};
+    const v = {tipo, nivel, horas: D.horas_pedido[tKey][nivel], look: lookAleatorio(), sq: Math.random() < .55 ? 1 : 2};
     res.reales += v.horas;
-    atender(v);
+    llegadas.push(v);
   });
+  llegadas.sort(porPrioridad).forEach(atender);   // el jefe asigna primero las de mayor prioridad
   res.pendiente = pendientes.reduce((t,v)=>t+v.horas,0);
   return {res, pendientes};
 }
@@ -647,15 +653,16 @@ function spawn(clase){
   }
   const color = clase === "rech" ? "#9aa3ad" : tipo === "inc" ? "var(--inc)" : "var(--req)";
   person(g, 0, 0, color, look);
-  const bubble = el("g", {opacity:0}, g);
-  burbuja(bubble, msg, tipo === "inc" ? "#f0b4ae" : "#b9cff0");
-  const v = {g, bubble, tipo, clase, motivo, look, x:DOOR.x, y:DOOR.y, i:0, waitUntil:0, path:[]};
+  const v = {g, tipo, clase, motivo, look, x:DOOR.x, y:DOOR.y, i:0, waitUntil:0, path:[]};
   if (clase !== "rech") {
     const tKey = tipo === "inc" ? "incidencia" : "requerimiento";
     v.nivel = sortear(D.mezcla[tKey]);
+    if (tipo === "inc") msg = "P" + prioridad(v) + " · " + msg;
     v.horas = D.horas_pedido[tKey][v.nivel];
     if (sim[mes]) { sim[mes].reales += v.horas; renderTabla(); }
   }
+  v.bubble = el("g", {opacity:0}, g);
+  burbuja(v.bubble, msg, tipo === "inc" ? "#f0b4ae" : "#b9cff0");
   v.path.push({x:ROBOT.x, y:ROBOT.y+60, wait:1500, say:true, accion:"robot"});
   g.setAttribute("transform", `translate(${v.x},${v.y})`);
   visitors.push(v);

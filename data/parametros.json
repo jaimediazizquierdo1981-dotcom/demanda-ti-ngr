@@ -69,5 +69,10 @@
       "No es un pedido de data": 0.35,
       "Pedido duplicado": 0.15
     }
+  },
+  "prioridad_incidencias": {
+    "Alto": 1,
+    "Medio": 2,
+    "Bajo": 3
   }
 }
