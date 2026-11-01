@@ -112,7 +112,7 @@
 
     <section class="card" id="sec-pr">
       <h2><span class="n">7</span>Proyectos</h2>
-      <p class="d">Participación = % de dedicación. Base "equipo" aplica el % sobre todo el equipo; "jefes", solo sobre los jefes; "persona", sobre un solo recurso.</p>
+      <p class="d">Participación = % de dedicación. Base "Equipo" aplica el % sobre todo el equipo; si eliges una cantidad de miembros (ej. 2), el % se aplica solo sobre esas personas.</p>
       <table id="t-proyectos"></table>
       <button class="btn add" data-add="proyectos">+ Agregar proyecto</button>
     </section>
@@ -223,7 +223,7 @@ const TABLAS = {
   },
   proyectos: {
     cols: [["incluir","Incluir","chk"],["codigo","Código","text","w-xs"],["proyecto","Proyecto","text","w-l"],["tipo","Tipo","sel","w-m",[["Tecnologia","TI"],["Transformacional","Transformacional"]]],
-           ["inicio","Inicio","date","w-m"],["fin","Fin","date","w-m"],["participacion","Participación %","pct","w-xs"],["base","Base","sel","w-s",[["equipo","Equipo"],["jefes","Jefes"],["persona","Persona"]]]],
+           ["inicio","Inicio","date","w-m"],["fin","Fin","date","w-m"],["participacion","Participación %","pct","w-xs"],["base","Base","selb","w-s"]],
     nuevo: () => ({incluir:true, codigo:"N"+(CFG.proyectos.length+1), proyecto:"Nuevo proyecto", tipo:"Tecnologia", inicio:"2027-07-01", fin:"2027-11-30", participacion:0.1, base:"equipo"}),
   },
   vacaciones: {
@@ -243,8 +243,10 @@ function celda(tbl, i, [k, , tipo, w, opts]){
   if (tipo === "num") return `<td><input type="number" step="1" min="0" class="${w||""}" ${a} value="${v}"></td>`;
   if (tipo === "pct") return `<td><input type="number" step="1" min="0" max="100" class="${w||""}" ${a} data-pct="1" value="${+(v*100).toFixed(2)}"></td>`;
   if (tipo === "date") return `<td><input type="date" class="${w||""}" ${a} value="${String(v).slice(0,10)}"></td>`;
-  if (tipo === "sel" || tipo === "selp") {
-    const ops = tipo === "selp" ? CFG.equipo.map(e => [e.persona, e.persona]) : opts.map(o => Array.isArray(o) ? o : [o, o]);
+  if (tipo === "sel" || tipo === "selp" || tipo === "selb") {
+    const ops = tipo === "selp" ? CFG.equipo.map(e => [e.persona, e.persona])
+      : tipo === "selb" ? [["equipo","Equipo"], ...Array.from({length: Math.max(1, CFG.equipo.filter(e => e.incluir !== false).length)}, (_, i) => [String(i+1), (i+1) + (i ? " miembros" : " miembro")])]
+      : opts.map(o => Array.isArray(o) ? o : [o, o]);
     return `<td><select class="${w||""}" ${a}>${ops.map(([val,t]) => `<option value="${val}" ${val===v?"selected":""}>${t}</option>`).join("")}</select></td>`;
   }
   return `<td><input type="text" class="${w||""}" ${a} value="${String(v ?? "").replace(/"/g,"&quot;")}"></td>`;

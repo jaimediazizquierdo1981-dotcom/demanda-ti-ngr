@@ -156,9 +156,18 @@ def carga_proyectos(ins: dict) -> pd.DataFrame:
     filas = []
     for _, pr in ins["proyectos"].iterrows():
         dias = du[(du >= pr["inicio"]) & (du <= pr["fin"])]
-        # base "equipo": % de todo el equipo; "jefes": % de los jefes; "persona": % de un solo recurso
-        base = str(pr.get("base", "equipo"))
-        hdia = {"persona": horas_persona_dia, "jefes": horas_jefes_dia}.get(base, horas_equipo_dia)
+        # base "equipo": % de todo el equipo; un número N: % de N miembros del equipo
+        base = str(pr.get("base", "equipo")).strip().lower()
+        if base in ("persona", "1"):
+            n_miembros = 1
+        elif base == "jefes":
+            n_miembros = int((eq["rol"] == "Jefe").sum())
+        else:
+            try:
+                n_miembros = int(float(base))
+            except ValueError:
+                n_miembros = None
+        hdia = horas_equipo_dia if n_miembros is None else horas_persona_dia * n_miembros
         for m in range(1, 13):
             n = int((dias.month == m).sum())
             filas.append({"mes": m, "codigo": pr["codigo"], "proyecto": pr["proyecto"],
