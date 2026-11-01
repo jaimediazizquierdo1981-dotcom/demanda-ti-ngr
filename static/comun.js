@@ -9,6 +9,10 @@ function guardarCfg(cfg) {
 }
 function borrarCfg() { try { localStorage.removeItem(CFG_KEY); } catch (e) {} }
 
+// si la sesión vence, vuelve al login
+const _fetch = window.fetch.bind(window);
+window.fetch = async (...a) => { const r = await _fetch(...a); if (r.status === 401 && String(a[0]).startsWith("/api/") && !String(a[0]).includes("/api/login") && !String(a[0]).includes("/api/cargar") && !String(a[0]).includes("/api/config/guardar")) { location.href = "/login?next=" + location.pathname; } return r; };
+
 async function calcular(cfg) {
   const r = await fetch("/api/calcular", {
     method: "POST", headers: {"Content-Type": "application/json"},
@@ -22,7 +26,7 @@ function nav(activa) {
   const tabs = [["/", "Resumen"], ["/oficina", "Oficina"], ["/modelos", "Modelos"], ["/parametros", "Parámetros"]];
   const personal = leerCfg() ? '<span class="chip-cfg" title="Estás viendo resultados con parámetros modificados">Parámetros modificados</span>' : '<span class="chip-cfg base">Valores compartidos</span>';
   const html = `<nav class="tabs"><div class="brand">Demanda TI · Data NGR 2027</div>
-    <div class="tablist">${tabs.map(([h, t]) => `<a href="${h}" class="${t === activa ? "on" : ""}">${t}</a>`).join("")}</div>${personal}</nav>`;
+    <div class="tablist">${tabs.map(([h, t]) => `<a href="${h}" class="${t === activa ? "on" : ""}">${t}</a>`).join("")}</div>${personal}<a href="/logout" class="salir">Salir</a></nav>`;
   document.body.insertAdjacentHTML("afterbegin", html);
 }
 

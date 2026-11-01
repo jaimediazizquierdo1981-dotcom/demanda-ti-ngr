@@ -12,3 +12,5 @@ nav.tabs a.on{background:#fff;color:var(--accent);font-weight:700}
 nav.tabs a:hover:not(.on){background:rgba(255,255,255,.12);color:#fff}
 .chip-cfg{font-size:12px;background:#f6c344;color:#3b2c00;padding:3px 10px;border-radius:999px;font-weight:600}
 .chip-cfg.base{background:rgba(255,255,255,.15);color:#dfe6f3;font-weight:500}
+nav.tabs a.salir{color:#cfd8ea;font-size:13px;border:1px solid rgba(255,255,255,.3);padding:4px 12px}
+nav.tabs a.salir:hover{background:rgba(255,255,255,.12);color:#fff}

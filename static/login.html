@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingresar · Demanda TI NGR</title>
+<link rel="stylesheet" href="/static/comun.css">
+<style>
+  body{min-height:100vh;display:grid;place-items:center;background:linear-gradient(160deg,#1F3864 0%,#2c4b80 55%,#f3f1ec 55%)}
+  .caja{background:#fff;border-radius:18px;box-shadow:0 20px 50px rgba(15,30,60,.25);padding:32px 34px;width:min(400px,92vw)}
+  .marca{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .marca .logo{width:38px;height:38px;border-radius:10px;background:#1F3864;color:#fff;display:grid;place-items:center;font-weight:800}
+  h1{font-size:19px;margin:0} .sub{color:var(--muted);font-size:13px;margin:4px 0 22px}
+  label{display:block;font-size:12.5px;font-weight:600;margin:12px 0 5px}
+  input{font:inherit;width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff}
+  input:focus{outline:2px solid #9db7e3;border-color:#9db7e3}
+  .cap{display:flex;gap:8px;align-items:center}
+  .cap img{border-radius:8px;border:1px solid var(--line);height:56px;width:180px}
+  .cap button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:9px;height:56px;width:46px;cursor:pointer;font-size:18px}
+  .entrar{margin-top:20px;width:100%;font:inherit;font-weight:700;border:none;border-radius:10px;padding:12px;background:#1F3864;color:#fff;cursor:pointer}
+  .entrar:disabled{opacity:.6;cursor:wait}
+  .err{color:var(--bad);font-size:13px;margin-top:12px;min-height:18px}
+  .pie{color:var(--muted);font-size:11.5px;margin-top:14px;text-align:center}
+</style>
+</head>
+<body>
+<form class="caja" id="f" autocomplete="on">
+  <div class="marca"><div class="logo">TI</div><h1>Demanda TI · Data NGR</h1></div>
+  <div class="sub">Planificación de demanda y capacidad 2027</div>
+
+  <label for="u">Usuario</label>
+  <input id="u" name="username" autocomplete="username" required autofocus>
+
+  <label for="p">Contraseña</label>
+  <input id="p" name="password" type="password" autocomplete="current-password" required>
+
+  <label for="c">Código de verificación</label>
+  <div class="cap"><img id="img" alt="Código de verificación"><button type="button" id="otro" title="Otro código">↻</button></div>
+  <input id="c" style="margin-top:8px" placeholder="Escribe las 5 letras o números" autocomplete="off" maxlength="5" required>
+
+  <button class="entrar" id="b">Ingresar</button>
+  <div class="err" id="err"></div>
+  <div class="pie">La sesión dura 8 horas.</div>
+</form>
+<script>
+const img = document.getElementById("img");
+function nuevoCaptcha(){ img.src = "/api/auth/captcha?t=" + Date.now(); document.getElementById("c").value = ""; }
+document.getElementById("otro").onclick = nuevoCaptcha;
+nuevoCaptcha();
+document.getElementById("f").onsubmit = async e => {
+  e.preventDefault();
+  const b = document.getElementById("b"), err = document.getElementById("err");
+  b.disabled = true; err.textContent = "";
+  const r = await fetch("/api/auth/login", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({usuario: document.getElementById("u").value.trim(), password: document.getElementById("p").value,
+                          captcha: document.getElementById("c").value})});
+  if (r.ok) {
+    const next = new URLSearchParams(location.search).get("next") || "/";
+    location.href = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    return;
+  }
+  const d = await r.json().catch(() => ({}));
+  err.textContent = d.detail || "No se pudo ingresar.";
+  b.disabled = false; nuevoCaptcha();
+};
+</script>
+</body>
+</html>
