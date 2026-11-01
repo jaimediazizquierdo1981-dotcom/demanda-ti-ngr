@@ -90,7 +90,7 @@
 
     <section class="card" id="sec-niv">
       <h2><span class="n">4</span>Horas por complejidad e impacto</h2>
-      <p class="d">Requerimientos por complejidad y incidencias por impacto al negocio. Con "peor escenario" se usa el máximo; con "promedio del rango", el punto medio.</p>
+      <p class="d">Requerimientos: rango de horas por complejidad (con "peor escenario" se usa el máximo; con "promedio del rango", el punto medio). Incidencias: horas de atención y prioridad según el impacto al negocio.</p>
       <div class="lvl">
         <div id="niv-req"></div>
         <div id="niv-inc"></div>
@@ -200,9 +200,13 @@ function renderGeneral(){
     const niv = CFG.horas_por_nivel[tipo];
     const pri = tipo === "incidencia";
     CFG.prioridad_incidencias = CFG.prioridad_incidencias || {Alto:1, Medio:2, Bajo:3};
-    return `<h3>${titulo}</h3><table data-dep="${tipo}"><tr><th>${etiqueta}</th>${pri ? "<th>Prioridad de asignación</th>" : ""}<th>Mínimo (h)</th><th>Máximo (h)</th></tr>` +
+    if (pri) return `<h3>${titulo}</h3><table data-dep="${tipo}"><tr><th>${etiqueta}</th><th>Prioridad de asignación</th><th>Horas de atención</th></tr>` +
       Object.keys(niv).map(n => `<tr><td>${n}</td>
-        ${pri ? `<td><input type="number" step="1" min="1" data-pri="${n}" value="${CFG.prioridad_incidencias[n] ?? ""}"></td>` : ""}
+        <td><input type="number" step="1" min="1" data-pri="${n}" value="${CFG.prioridad_incidencias[n] ?? ""}"></td>
+        <td><input type="number" step="0.5" min="0" data-nivh="${n}" value="${niv[n][1]}"></td></tr>`).join("") + `</table>` +
+      `<p class="d" style="margin-top:6px">La prioridad solo define el orden de asignación (1 = primero). Las horas son el esfuerzo de atención.</p>`;
+    return `<h3>${titulo}</h3><table data-dep="${tipo}"><tr><th>${etiqueta}</th><th>Mínimo (h)</th><th>Máximo (h)</th></tr>` +
+      Object.keys(niv).map(n => `<tr><td>${n}</td>
         <td><input type="number" step="0.5" min="0" data-niv="${tipo}|${n}|0" value="${niv[n][0]}"></td>
         <td><input type="number" step="0.5" min="0" data-niv="${tipo}|${n}|1" value="${niv[n][1]}"></td></tr>`).join("") + `</table>` +
       (pri ? `<p class="d" style="margin-top:6px">La prioridad solo define el orden de asignación (1 = primero). Las horas son el esfuerzo de atención.</p>` : "");
@@ -296,6 +300,7 @@ document.addEventListener("change", e => {
     const v = t.type === "number" ? (+t.value) / (+t.dataset.scale || 1) : t.value;
     set(t.dataset.path, v); pendiente(); return;
   }
+  if (t.dataset.nivh) { CFG.horas_por_nivel.incidencia[t.dataset.nivh] = [+t.value, +t.value]; pendiente(); return; }
   if (t.dataset.pri) { CFG.prioridad_incidencias[t.dataset.pri] = +t.value; pendiente(); return; }
   if (t.dataset.niv) {
     const [tipo, n, j] = t.dataset.niv.split("|"); CFG.horas_por_nivel[tipo][n][+j] = +t.value; pendiente(); return;
