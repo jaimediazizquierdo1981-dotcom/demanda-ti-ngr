@@ -39,6 +39,9 @@
   button:hover{border-color:#aaa}
   .mes{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px 4px;border-radius:8px;border:1px solid transparent;background:transparent}
   .mes.sel{background:#fff;border-color:var(--ink)}
+  .mes .prog{width:80%;height:6px;background:#e7e2d8;border-radius:3px;overflow:hidden}
+  .mes .prog i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px}
+  .mes .dia{font-size:10px;color:var(--accent);font-weight:700;height:12px;line-height:12px}
   .mes .bar{width:70%;height:46px;background:#ece8df;border-radius:4px;position:relative;overflow:hidden}
   .mes .bar i{position:absolute;left:0;right:0;bottom:0;border-radius:4px}
   .mes .bar b{position:absolute;left:0;right:0;border-top:2px dashed #555}
@@ -399,6 +402,7 @@ function buildTimeline(){
   c.innerHTML = D.resumen.map(r => {
     const u = Math.min(1.5, r.utilizacion);
     return `<button class="mes" data-m="${r.mes}" title="${r.mes_nombre}: ${pct(r.utilizacion)}">
+      <div class="dia"></div><div class="prog"><i></i></div>
       <div class="bar"><i style="height:${u/1.5*100}%;background:${colorUtil(r.utilizacion)}"></i><b style="bottom:${100/1.5}%"></b></div>
       <span>${r.mes_nombre}</span><small>${pct(r.utilizacion)}</small></button>`;
   }).join("");
@@ -527,22 +531,36 @@ function accionRobot(v){
 }
 
 // El jefe asigna a quien tenga horas; si nadie en el squad tiene, va a la sala de espera
+// El jefe asigna: 1) alguien de su squad con horas completas, 2) apoyo del otro squad,
+// 3) avance parcial con quien tenga más horas libres (el saldo pasa al mes siguiente),
+// 4) si nadie tiene horas, a la sala de espera.
 function accionJefe(v){
-  const miembros = Object.keys(DESKS).filter(n => DESKS[n].sq === v.sq);
-  const conHoras = miembros.filter(n => deskInfo[n].disponible >= v.horas)
-    .sort((a,b) => (deskInfo[a].rol==="Jefe") - (deskInfo[b].rol==="Jefe") || deskInfo[b].disponible - deskInfo[a].disponible);
-  if (conHoras.length) {
-    v.asignado = conHoras[0];
-    deskInfo[v.asignado].disponible -= v.horas;  // se reserva al asignar
-    const ad = DESKS[v.asignado];
-    v.path.push({x:ad.x-44, y:ad.y+26, wait:800, accion:"entregar"});
-    v.path.push({x:DOOR.x-20, y:DOOR.y+10, wait:0, accion:"salir"});
-  } else {
-    const k = espera.length + visitors.filter(x => x.destino === "espera").length;
-    const silla = SILLAS_ESPERA[Math.min(k, SILLAS_ESPERA.length-1)];
-    v.destino = "espera";
-    v.path.push({x:silla.x, y:silla.y, wait:0, accion:"sentar_espera"});
+  const todos = Object.keys(DESKS);
+  const orden = (a,b) => (deskInfo[a].rol==="Jefe") - (deskInfo[b].rol==="Jefe") || deskInfo[b].disponible - deskInfo[a].disponible;
+  const propio = todos.filter(n => DESKS[n].sq === v.sq), otro = todos.filter(n => DESKS[n].sq !== v.sq);
+  let asignado = propio.filter(n => deskInfo[n].disponible >= v.horas).sort(orden)[0];
+  v.apoyo = false;
+  if (!asignado) { asignado = otro.filter(n => deskInfo[n].disponible >= v.horas).sort(orden)[0]; v.apoyo = !!asignado; }
+  let tramo = v.horas;
+  if (!asignado) {
+    const parcial = todos.filter(n => deskInfo[n].disponible >= 1)
+      .sort((a,b) => deskInfo[b].disponible - deskInfo[a].disponible || (DESKS[a].sq !== v.sq) - (DESKS[b].sq !== v.sq))[0];
+    if (parcial) { asignado = parcial; tramo = deskInfo[parcial].disponible; v.apoyo = DESKS[parcial].sq !== v.sq; }
   }
+  if (asignado) {
+    v.asignado = asignado; v.tramo = tramo; v.restante = v.horas - tramo;
+    deskInfo[asignado].disponible -= tramo;   // se reserva al asignar
+    const ad = DESKS[asignado];
+    v.path.push({x:ad.x-44, y:ad.y+26, wait:800, accion:"entregar"});
+    if (v.restante > 0.01) mandarAEspera(v);
+    else v.path.push({x:DOOR.x-20, y:DOOR.y+10, wait:0, accion:"salir"});
+  } else mandarAEspera(v);
+}
+function mandarAEspera(v){
+  const k = espera.length + visitors.filter(x => x.destino === "espera").length;
+  const silla = SILLAS_ESPERA[Math.min(k, SILLAS_ESPERA.length-1)];
+  v.destino = "espera";
+  v.path.push({x:silla.x, y:silla.y, wait:0, accion:"sentar_espera"});
 }
 
 function entregar(v){
@@ -550,10 +568,25 @@ function entregar(v){
   const p = DESKS[v.asignado];
   if (k < 8) el("rect", {x:p.x+30, y:p.y-30 - k*4, width:16, height:10, rx:2, fill: v.tipo==="inc" ? "#f6c6c1" : "#c9dbf6", stroke: v.tipo==="inc" ? "#e0453a" : "#2f6fd6", "stroke-width":.8}, d.pile);
   pintarDisponible(v.asignado);
-  if (sim[mes]) sim[mes].atendidas += v.horas;
+  const tramo = v.tramo ?? v.horas;
+  if (sim[mes]) sim[mes].atendidas += tramo;
+  // si fue avance parcial, lo que falta queda pendiente
+  if (v.restante > 0.01) { v.horas = v.restante; v.restante = 0; }
   // "-30 h" flotando sobre el escritorio
-  const t = txt(p.x, p.y-44, "−" + fmt(v.horas) + " h", {"text-anchor":"middle", "font-size":13, "font-weight":700, fill: v.tipo==="inc" ? "var(--inc)" : "var(--req)"}, d.fx);
+  const t = txt(p.x, p.y-44, "−" + fmt(tramo) + " h" + (v.horas !== tramo && v.destino === "espera" ? " (avance)" : "") + (v.apoyo ? " 🤝" : ""), {"text-anchor":"middle", "font-size":13, "font-weight":700, fill: v.tipo==="inc" ? "var(--inc)" : "var(--req)"}, d.fx);
   let y = 0; const iv = setInterval(() => { y -= 1; t.setAttribute("transform", `translate(0,${y})`); t.setAttribute("opacity", 1 + y/30); if (y < -30) { clearInterval(iv); t.remove(); } }, 40);
+}
+
+const DIAS_MES = [31,28,31,30,31,30,31,31,30,31,30,31];
+let ultimoDia = -1;
+function pintarProgreso(){
+  const frac = Math.max(0, Math.min(1, elapsed / MONTH_MS));
+  const dia = Math.max(1, Math.ceil(frac * DIAS_MES[mes-1]));
+  document.querySelectorAll(".mes").forEach(b => {
+    const m = +b.dataset.m, i = b.querySelector(".prog i"), d = b.querySelector(".dia");
+    if (m === mes) { i.style.width = (frac * 100).toFixed(1) + "%"; d.textContent = "Día " + dia + " de " + DIAS_MES[m-1]; }
+    else { i.style.width = sim[m] && sim[m].cerrado ? "100%" : "0%"; d.textContent = ""; }
+  });
 }
 
 let last = performance.now();
@@ -597,6 +630,7 @@ function tick(now){
     v.g.setAttribute("transform", `translate(${v.x.toFixed(1)},${v.y.toFixed(1)})`);
   }
   visitors = visitors.filter(v => { if (v.done) { v.g.remove(); return false; } return true; });
+  if (D) pintarProgreso();
   requestAnimationFrame(tick);
 }
 
