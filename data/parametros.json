@@ -4,13 +4,47 @@
   "anticipacion_meses": 2,
   "dias_descanso_medico_anual": 5,
   "horas_por_nivel": {
-    "requerimiento": {"Alta": [20, 30], "Media": [10, 12], "Baja": [3, 4]},
-    "incidencia": {"Alto": [0.5, 2], "Medio": [2, 8], "Bajo": [4, 24]}
+    "requerimiento": {
+      "Alta": [
+        20,
+        30
+      ],
+      "Media": [
+        10,
+        12
+      ],
+      "Baja": [
+        3,
+        4
+      ]
+    },
+    "incidencia": {
+      "Alto": [
+        0.5,
+        2
+      ],
+      "Medio": [
+        2,
+        8
+      ],
+      "Bajo": [
+        4,
+        24
+      ]
+    }
   },
   "estimacion": "peor_escenario",
   "erlang_c": {
     "objetivo_prob_espera": 0.2,
     "nota": "Probabilidad máxima aceptada de que una incidencia espere a que alguien se libere"
   },
-  "monte_carlo": {"simulaciones": 5000, "percentil_plan": 90, "semilla": 2027}
+  "monte_carlo": {
+    "simulaciones": 5000,
+    "percentil_plan": 90,
+    "semilla": 2027
+  },
+  "horas_gestion_dia_por_rol": {
+    "Jefe": 2,
+    "Equipo": 0
+  }
 }

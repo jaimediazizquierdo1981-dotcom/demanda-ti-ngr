@@ -59,6 +59,7 @@ def capacidad(ins: dict) -> pd.DataFrame:
     filas = []
     for _, per in eq.iterrows():
         hdia = per["horas_semana"] / 5
+        hgest = p.get("horas_gestion_dia_por_rol", {}).get(per["rol"], 0)
         vac = ins["vacaciones"][ins["vacaciones"]["persona"] == per["persona"]]
         dias_vac = pd.DatetimeIndex([])
         for _, v in vac.iterrows():
@@ -67,15 +68,18 @@ def capacidad(ins: dict) -> pd.DataFrame:
             dm = du[du.month == m]
             vm = (dias_vac.month == m).sum()
             med = p["dias_descanso_medico_anual"] * len(dm) / total_du
+            dias_presente = len(dm) - vm - med
             filas.append({
-                "mes": m, "persona": per["persona"], "squad": per["squad"],
+                "mes": m, "persona": per["persona"], "squad": per["squad"], "rol": per["rol"],
                 "dias_utiles": len(dm),
                 "horas_brutas": len(dm) * hdia,
+                "horas_gestion": dias_presente * hgest,
                 "horas_vacaciones": vm * hdia,
                 "horas_descanso_medico": med * hdia,
             })
     df = pd.DataFrame(filas)
-    df["horas_netas"] = df["horas_brutas"] - df["horas_vacaciones"] - df["horas_descanso_medico"]
+    df["horas_netas"] = (df["horas_brutas"] - df["horas_vacaciones"]
+                         - df["horas_descanso_medico"] - df["horas_gestion"])
     return df
 
 
@@ -220,7 +224,8 @@ def ejecutar(data_dir: Path = DATA) -> dict:
     mc = monte_carlo(ins, prono)
     erl = personas_incidencias(ins, prono, cap)
 
-    capm = cap.groupby("mes")[["horas_brutas", "horas_vacaciones", "horas_descanso_medico", "horas_netas"]].sum()
+    capm = cap.groupby("mes")[["horas_brutas", "horas_vacaciones", "horas_descanso_medico",
+                               "horas_gestion", "horas_netas"]].sum()
     proym = proy.pivot_table(index="mes", columns="tipo", values="horas", aggfunc="sum").fillna(0)
     res = capm.join(proym).join(mc.set_index("mes")).join(erl.set_index("mes")).reset_index()
     res["horas_proyectos"] = res[["Tecnologia", "Transformacional"]].sum(axis=1)
