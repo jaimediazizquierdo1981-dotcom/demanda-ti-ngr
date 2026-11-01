@@ -1,0 +1,213 @@
+id,tipo,fecha,area,marca,squad,asignado,nivel,horas_reales
+INC-0001,incidencia,2025-01-02,Finanzas,Papa John's,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,20.5
+INC-0002,incidencia,2025-01-14,Supply Chain,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,8.3
+INC-0003,incidencia,2025-01-17,Comercial,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,5.9
+INC-0004,incidencia,2025-01-23,Operaciones,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Alto,1.8
+INC-0005,incidencia,2025-01-23,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Alto,1.8
+INC-0006,incidencia,2025-01-29,Sistemas,Don Belisario,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,6.2
+INC-0007,incidencia,2025-02-03,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Medio,3.6
+INC-0008,incidencia,2025-02-05,Comercial,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,19.1
+INC-0009,incidencia,2025-02-06,Finanzas,Don Belisario,"Finanzas, GDH y Sistemas",Diana Sebastian,Alto,1.4
+INC-0010,incidencia,2025-02-07,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Alto,1.9
+INC-0011,incidencia,2025-02-11,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Medio,5.2
+INC-0012,incidencia,2025-02-12,Operaciones,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,7.0
+INC-0013,incidencia,2025-02-19,Operaciones,Bembos,"Comercial, Supply y Marcas",Jorge Rios,Bajo,19.8
+INC-0014,incidencia,2025-02-19,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,7.6
+INC-0015,incidencia,2025-03-07,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,4.1
+INC-0016,incidencia,2025-03-12,Marketing,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Bajo,8.7
+INC-0017,incidencia,2025-03-14,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,5.4
+INC-0018,incidencia,2025-03-21,Marketing,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Bajo,19.9
+INC-0019,incidencia,2025-03-24,Gestión de Personas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Alto,1.8
+INC-0020,incidencia,2025-03-24,Gestión de Personas,Dunkin,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,12.2
+INC-0021,incidencia,2025-03-28,Comercial,Bembos,"Comercial, Supply y Marcas",Jorge Rios,Bajo,5.7
+INC-0022,incidencia,2025-03-28,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Alto,1.9
+INC-0023,incidencia,2025-04-09,Supply Chain,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,5.6
+INC-0024,incidencia,2025-04-14,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Alto,1.5
+INC-0025,incidencia,2025-04-15,Sistemas,Corporativo,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,9.0
+INC-0026,incidencia,2025-04-15,Comercial,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,23.5
+INC-0027,incidencia,2025-04-16,Marketing,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,23.3
+INC-0028,incidencia,2025-04-22,Operaciones,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,2.3
+INC-0029,incidencia,2025-04-30,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,5.6
+INC-0030,incidencia,2025-05-02,Marketing,Papa John's,"Comercial, Supply y Marcas",Jorge Rios,Bajo,13.8
+INC-0031,incidencia,2025-05-06,Marketing,Don Belisario,"Comercial, Supply y Marcas",Jorge Rios,Medio,2.3
+INC-0032,incidencia,2025-05-09,Marketing,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Bajo,11.6
+INC-0033,incidencia,2025-05-16,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Bajo,6.9
+INC-0034,incidencia,2025-05-20,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Bajo,18.3
+INC-0035,incidencia,2025-05-23,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Medio,7.1
+INC-0036,incidencia,2025-05-23,Gestión de Personas,Dunkin,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,8.4
+INC-0037,incidencia,2025-05-26,Marketing,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Bajo,22.8
+INC-0038,incidencia,2025-05-28,Comercial,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,12.3
+INC-0039,incidencia,2025-06-03,Operaciones,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Bajo,8.5
+INC-0040,incidencia,2025-06-04,Sistemas,Don Belisario,"Finanzas, GDH y Sistemas",Omar Llontop,Alto,1.5
+INC-0041,incidencia,2025-06-05,Comercial,Corporativo,"Comercial, Supply y Marcas",Luis Chavez,Medio,3.0
+INC-0042,incidencia,2025-06-16,Gestión de Personas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,19.9
+INC-0043,incidencia,2025-06-16,Marketing,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Alto,1.2
+INC-0044,incidencia,2025-07-01,Supply Chain,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Alto,1.7
+INC-0045,incidencia,2025-07-03,Comercial,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Medio,5.9
+INC-0046,incidencia,2025-07-10,Supply Chain,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Bajo,17.2
+INC-0047,incidencia,2025-07-11,Marketing,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Medio,4.5
+INC-0048,incidencia,2025-07-14,Marketing,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Alto,1.9
+INC-0049,incidencia,2025-07-18,Sistemas,Corporativo,"Finanzas, GDH y Sistemas",Omar Llontop,Alto,0.9
+INC-0050,incidencia,2025-07-18,Gestión de Personas,Dunkin,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,3.8
+INC-0051,incidencia,2025-07-21,Comercial,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Bajo,7.8
+INC-0052,incidencia,2025-07-25,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Omar Llontop,Alto,1.8
+INC-0053,incidencia,2025-07-30,Comercial,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Alto,0.6
+INC-0054,incidencia,2025-07-30,Operaciones,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Bajo,11.7
+INC-0055,incidencia,2025-08-08,Operaciones,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,15.7
+INC-0056,incidencia,2025-08-11,Sistemas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,6.4
+INC-0057,incidencia,2025-08-20,Operaciones,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Bajo,6.4
+INC-0058,incidencia,2025-08-22,Operaciones,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,7.4
+INC-0059,incidencia,2025-08-25,Comercial,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Medio,4.3
+INC-0060,incidencia,2025-08-26,Supply Chain,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Bajo,16.1
+INC-0061,incidencia,2025-08-27,Operaciones,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Alto,1.7
+INC-0062,incidencia,2025-08-29,Comercial,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,2.5
+INC-0063,incidencia,2025-09-01,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Alto,0.8
+INC-0064,incidencia,2025-09-12,Sistemas,Papa John's,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,10.7
+INC-0065,incidencia,2025-09-15,Gestión de Personas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,7.0
+INC-0066,incidencia,2025-09-15,Marketing,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,7.2
+INC-0067,incidencia,2025-09-19,Marketing,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,5.6
+INC-0068,incidencia,2025-09-24,Supply Chain,Bembos,"Comercial, Supply y Marcas",Jorge Rios,Medio,7.3
+INC-0069,incidencia,2025-09-25,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,4.3
+INC-0070,incidencia,2025-09-26,Sistemas,Don Belisario,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,6.5
+INC-0071,incidencia,2025-09-29,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,13.8
+INC-0072,incidencia,2025-10-01,Comercial,Dunkin,"Comercial, Supply y Marcas",Jorge Rios,Bajo,6.7
+INC-0073,incidencia,2025-10-02,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Medio,4.0
+INC-0074,incidencia,2025-10-09,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Medio,3.1
+INC-0075,incidencia,2025-10-10,Gestión de Personas,Don Belisario,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,8.9
+INC-0076,incidencia,2025-10-13,Operaciones,Corporativo,"Comercial, Supply y Marcas",Luis Chavez,Medio,5.0
+INC-0077,incidencia,2025-10-17,Sistemas,Corporativo,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,2.7
+INC-0078,incidencia,2025-10-21,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Medio,6.0
+INC-0079,incidencia,2025-10-23,Finanzas,Bembos,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,14.3
+INC-0080,incidencia,2025-10-28,Marketing,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Medio,4.7
+INC-0081,incidencia,2025-10-28,Sistemas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Alto,1.0
+INC-0082,incidencia,2025-10-30,Marketing,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,9.9
+INC-0083,incidencia,2025-11-03,Sistemas,Don Belisario,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,6.5
+INC-0084,incidencia,2025-11-04,Sistemas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Alto,0.9
+INC-0085,incidencia,2025-11-07,Gestión de Personas,Corporativo,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,13.3
+INC-0086,incidencia,2025-11-07,Sistemas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,11.8
+INC-0087,incidencia,2025-11-11,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,12.0
+INC-0088,incidencia,2025-11-13,Operaciones,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,2.8
+INC-0089,incidencia,2025-11-20,Comercial,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Medio,2.7
+INC-0090,incidencia,2025-11-20,Operaciones,Papa John's,"Comercial, Supply y Marcas",Jorge Rios,Alto,1.2
+INC-0091,incidencia,2025-11-20,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Medio,4.6
+INC-0092,incidencia,2025-11-25,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,15.6
+INC-0093,incidencia,2025-11-26,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Alto,1.1
+INC-0094,incidencia,2025-11-28,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Alto,0.5
+INC-0095,incidencia,2025-12-01,Marketing,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,7.8
+INC-0096,incidencia,2025-12-01,Comercial,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Bajo,16.0
+INC-0097,incidencia,2025-12-02,Marketing,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Bajo,12.2
+INC-0098,incidencia,2025-12-12,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,7.4
+INC-0099,incidencia,2025-12-16,Comercial,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,5.7
+INC-0100,incidencia,2025-12-17,Comercial,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,14.0
+INC-0101,incidencia,2025-12-18,Operaciones,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Bajo,17.1
+INC-0102,incidencia,2025-12-19,Marketing,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Medio,3.4
+INC-0103,incidencia,2026-01-06,Comercial,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Medio,4.2
+INC-0104,incidencia,2026-01-14,Gestión de Personas,Bembos,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,22.4
+INC-0105,incidencia,2026-01-20,Gestión de Personas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,20.6
+INC-0106,incidencia,2026-01-27,Operaciones,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Medio,5.1
+INC-0107,incidencia,2026-01-27,Operaciones,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Medio,3.2
+INC-0108,incidencia,2026-02-02,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,6.3
+INC-0109,incidencia,2026-02-04,Marketing,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,20.6
+INC-0110,incidencia,2026-02-05,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,4.2
+INC-0111,incidencia,2026-02-10,Comercial,Bembos,"Comercial, Supply y Marcas",Jorge Rios,Bajo,18.0
+INC-0112,incidencia,2026-02-10,Supply Chain,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,5.5
+INC-0113,incidencia,2026-02-10,Operaciones,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,20.7
+INC-0114,incidencia,2026-02-11,Supply Chain,Dunkin,"Comercial, Supply y Marcas",Jorge Rios,Medio,5.5
+INC-0115,incidencia,2026-02-12,Comercial,Don Belisario,"Comercial, Supply y Marcas",Jorge Rios,Medio,5.4
+INC-0116,incidencia,2026-02-13,Marketing,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Bajo,4.9
+INC-0117,incidencia,2026-02-13,Marketing,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,17.3
+INC-0118,incidencia,2026-02-17,Finanzas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,5.8
+INC-0119,incidencia,2026-02-25,Comercial,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Medio,2.4
+INC-0120,incidencia,2026-02-25,Finanzas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,21.4
+INC-0121,incidencia,2026-03-02,Operaciones,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,23.1
+INC-0122,incidencia,2026-03-09,Marketing,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,2.3
+INC-0123,incidencia,2026-03-10,Comercial,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Bajo,17.9
+INC-0124,incidencia,2026-03-18,Marketing,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Medio,4.4
+INC-0125,incidencia,2026-03-18,Operaciones,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,4.0
+INC-0126,incidencia,2026-03-18,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,23.5
+INC-0127,incidencia,2026-03-25,Supply Chain,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Bajo,21.5
+INC-0128,incidencia,2026-03-26,Comercial,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Bajo,8.7
+INC-0129,incidencia,2026-03-27,Gestión de Personas,Corporativo,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,10.4
+INC-0130,incidencia,2026-04-07,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,2.5
+INC-0131,incidencia,2026-04-09,Operaciones,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Medio,2.6
+INC-0132,incidencia,2026-04-10,Comercial,Chinawok,"Comercial, Supply y Marcas",Jorge Rios,Bajo,8.7
+INC-0133,incidencia,2026-04-10,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Bajo,16.9
+INC-0134,incidencia,2026-04-15,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,11.7
+INC-0135,incidencia,2026-04-15,Marketing,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Medio,7.6
+INC-0136,incidencia,2026-04-16,Comercial,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,8.3
+INC-0137,incidencia,2026-04-21,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,11.8
+INC-0138,incidencia,2026-04-22,Gestión de Personas,Chinawok,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,10.1
+INC-0139,incidencia,2026-04-22,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,15.9
+INC-0140,incidencia,2026-04-22,Sistemas,Corporativo,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,5.8
+INC-0141,incidencia,2026-04-27,Supply Chain,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,2.9
+INC-0142,incidencia,2026-04-27,Finanzas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,3.5
+INC-0143,incidencia,2026-04-28,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Bajo,4.2
+INC-0144,incidencia,2026-04-29,Operaciones,Bembos,"Comercial, Supply y Marcas",Jorge Rios,Medio,4.5
+INC-0145,incidencia,2026-05-05,Operaciones,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Alto,0.6
+INC-0146,incidencia,2026-05-06,Marketing,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,10.0
+INC-0147,incidencia,2026-05-07,Marketing,Dunkin,"Comercial, Supply y Marcas",Jorge Rios,Bajo,12.6
+INC-0148,incidencia,2026-05-15,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,4.0
+INC-0149,incidencia,2026-05-15,Operaciones,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,19.8
+INC-0150,incidencia,2026-05-25,Operaciones,Corporativo,"Comercial, Supply y Marcas",Luis Chavez,Bajo,22.8
+INC-0151,incidencia,2026-05-28,Sistemas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,14.0
+INC-0152,incidencia,2026-05-28,Marketing,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Bajo,13.4
+INC-0153,incidencia,2026-05-29,Comercial,Dunkin,"Comercial, Supply y Marcas",Jorge Rios,Medio,7.0
+INC-0154,incidencia,2026-05-29,Marketing,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,3.1
+INC-0155,incidencia,2026-05-29,Marketing,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,13.1
+INC-0156,incidencia,2026-06-02,Sistemas,Dunkin,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,7.1
+INC-0157,incidencia,2026-06-04,Comercial,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Bajo,14.7
+INC-0158,incidencia,2026-06-09,Supply Chain,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,18.8
+INC-0159,incidencia,2026-06-24,Finanzas,Bembos,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,11.1
+INC-0160,incidencia,2026-06-24,Gestión de Personas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,8.6
+INC-0161,incidencia,2026-06-24,Operaciones,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,6.6
+INC-0162,incidencia,2026-06-25,Finanzas,Don Belisario,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,9.0
+INC-0163,incidencia,2026-06-26,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,9.5
+INC-0164,incidencia,2026-07-01,Operaciones,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,14.4
+INC-0165,incidencia,2026-07-02,Gestión de Personas,Bembos,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Alto,1.5
+INC-0166,incidencia,2026-07-02,Operaciones,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,17.5
+INC-0167,incidencia,2026-07-02,Finanzas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,5.7
+INC-0168,incidencia,2026-07-03,Marketing,Papa John's,"Comercial, Supply y Marcas",Jorge Rios,Alto,1.3
+INC-0169,incidencia,2026-07-09,Comercial,Don Belisario,"Comercial, Supply y Marcas",Jorge Rios,Bajo,8.3
+INC-0170,incidencia,2026-07-13,Comercial,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Bajo,9.7
+INC-0171,incidencia,2026-07-13,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,15.7
+INC-0172,incidencia,2026-07-13,Operaciones,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,13.5
+INC-0173,incidencia,2026-07-13,Marketing,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Bajo,8.6
+INC-0174,incidencia,2026-07-15,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,2.6
+INC-0175,incidencia,2026-07-15,Sistemas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,15.9
+INC-0176,incidencia,2026-07-17,Comercial,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Medio,5.4
+INC-0177,incidencia,2026-07-20,Operaciones,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Bajo,12.7
+INC-0178,incidencia,2026-07-21,Marketing,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Bajo,22.3
+INC-0179,incidencia,2026-07-22,Finanzas,Don Belisario,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,5.1
+INC-0180,incidencia,2026-07-22,Gestión de Personas,Corporativo,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,19.0
+INC-0181,incidencia,2026-08-07,Comercial,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Bajo,18.8
+INC-0182,incidencia,2026-08-10,Supply Chain,Don Belisario,"Comercial, Supply y Marcas",Jorge Rios,Bajo,10.1
+INC-0183,incidencia,2026-08-11,Marketing,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,2.1
+INC-0184,incidencia,2026-08-12,Marketing,Corporativo,"Comercial, Supply y Marcas",Luis Chavez,Medio,6.0
+INC-0185,incidencia,2026-08-14,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Alto,1.0
+INC-0186,incidencia,2026-08-20,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,15.3
+INC-0187,incidencia,2026-08-24,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,6.1
+INC-0188,incidencia,2026-08-25,Marketing,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Medio,2.8
+INC-0189,incidencia,2026-08-28,Operaciones,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,11.7
+INC-0190,incidencia,2026-08-28,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Medio,6.1
+INC-0191,incidencia,2026-09-04,Marketing,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Alto,1.0
+INC-0192,incidencia,2026-09-07,Operaciones,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,4.5
+INC-0193,incidencia,2026-09-10,Comercial,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Alto,1.4
+INC-0194,incidencia,2026-09-10,Finanzas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,4.8
+INC-0195,incidencia,2026-09-11,Marketing,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,17.3
+INC-0196,incidencia,2026-09-11,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Bajo,13.0
+INC-0197,incidencia,2026-09-14,Gestión de Personas,Don Belisario,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Medio,7.4
+INC-0198,incidencia,2026-09-16,Supply Chain,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Bajo,21.5
+INC-0199,incidencia,2026-09-22,Marketing,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Bajo,5.2
+INC-0200,incidencia,2026-09-23,Marketing,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Bajo,20.3
+INC-0201,incidencia,2026-09-24,Finanzas,Corporativo,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Medio,3.2
+INC-0202,incidencia,2026-09-30,Marketing,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Alto,1.4
+INC-0203,incidencia,2026-09-30,Supply Chain,Chinawok,"Comercial, Supply y Marcas",Jorge Rios,Bajo,8.1
+INC-0204,incidencia,2026-10-05,Gestión de Personas,Don Belisario,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,22.6
+INC-0205,incidencia,2026-10-06,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,5.7
+INC-0206,incidencia,2026-10-06,Comercial,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Bajo,10.7
+INC-0207,incidencia,2026-10-06,Supply Chain,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Alto,1.4
+INC-0208,incidencia,2026-10-07,Marketing,Chinawok,"Comercial, Supply y Marcas",Jorge Rios,Bajo,11.4
+INC-0209,incidencia,2026-10-13,Gestión de Personas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Bajo,23.1
+INC-0210,incidencia,2026-10-13,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Medio,2.1
+INC-0211,incidencia,2026-10-21,Operaciones,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Medio,7.4
+INC-0212,incidencia,2026-10-28,Finanzas,Bembos,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Bajo,7.6

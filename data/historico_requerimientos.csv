@@ -1,0 +1,187 @@
+id,tipo,fecha,area,marca,squad,asignado,nivel,horas_reales
+REQ-0001,requerimiento,2025-01-16,Comercial,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,28.0
+REQ-0002,requerimiento,2025-01-16,Operaciones,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,27.3
+REQ-0003,requerimiento,2025-02-04,Operaciones,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Alta,23.8
+REQ-0004,requerimiento,2025-02-05,Sistemas,Papa John's,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Baja,3.2
+REQ-0005,requerimiento,2025-02-11,Supply Chain,Chinawok,"Comercial, Supply y Marcas",Jorge Rios,Alta,22.5
+REQ-0006,requerimiento,2025-02-12,Supply Chain,Dunkin,"Comercial, Supply y Marcas",Jorge Rios,Media,11.2
+REQ-0007,requerimiento,2025-02-21,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.1
+REQ-0008,requerimiento,2025-02-24,Gestión de Personas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,11.9
+REQ-0009,requerimiento,2025-02-25,Operaciones,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,28.0
+REQ-0010,requerimiento,2025-02-28,Operaciones,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.4
+REQ-0011,requerimiento,2025-03-03,Comercial,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Alta,20.7
+REQ-0012,requerimiento,2025-03-10,Comercial,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,22.0
+REQ-0013,requerimiento,2025-03-13,Finanzas,Don Belisario,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,11.8
+REQ-0014,requerimiento,2025-03-14,Marketing,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.4
+REQ-0015,requerimiento,2025-03-19,Sistemas,Chinawok,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Media,10.9
+REQ-0016,requerimiento,2025-03-21,Operaciones,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Media,11.2
+REQ-0017,requerimiento,2025-03-25,Comercial,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.4
+REQ-0018,requerimiento,2025-03-27,Marketing,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Alta,25.2
+REQ-0019,requerimiento,2025-04-01,Supply Chain,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,28.4
+REQ-0020,requerimiento,2025-04-07,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Baja,3.5
+REQ-0021,requerimiento,2025-04-08,Supply Chain,Chinawok,"Comercial, Supply y Marcas",Jorge Rios,Baja,3.6
+REQ-0022,requerimiento,2025-04-09,Supply Chain,Corporativo,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.6
+REQ-0023,requerimiento,2025-04-11,Sistemas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.4
+REQ-0024,requerimiento,2025-04-15,Sistemas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,10.9
+REQ-0025,requerimiento,2025-04-23,Comercial,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Media,10.7
+REQ-0026,requerimiento,2025-04-24,Gestión de Personas,Dunkin,"Finanzas, GDH y Sistemas",Omar Llontop,Baja,3.9
+REQ-0027,requerimiento,2025-05-07,Gestión de Personas,Dunkin,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,11.9
+REQ-0028,requerimiento,2025-05-07,Operaciones,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Alta,29.2
+REQ-0029,requerimiento,2025-05-14,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Baja,3.6
+REQ-0030,requerimiento,2025-05-22,Sistemas,Corporativo,"Finanzas, GDH y Sistemas",Omar Llontop,Media,11.7
+REQ-0031,requerimiento,2025-05-29,Marketing,Corporativo,"Comercial, Supply y Marcas",Luis Chavez,Media,11.4
+REQ-0032,requerimiento,2025-05-30,Marketing,Corporativo,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.4
+REQ-0033,requerimiento,2025-06-06,Comercial,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Baja,4.0
+REQ-0034,requerimiento,2025-06-11,Operaciones,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.9
+REQ-0035,requerimiento,2025-06-18,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Media,11.9
+REQ-0036,requerimiento,2025-06-20,Sistemas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.7
+REQ-0037,requerimiento,2025-06-20,Sistemas,Dunkin,"Finanzas, GDH y Sistemas",Omar Llontop,Baja,4.0
+REQ-0038,requerimiento,2025-06-20,Marketing,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.4
+REQ-0039,requerimiento,2025-06-30,Marketing,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Media,10.4
+REQ-0040,requerimiento,2025-07-01,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,10.1
+REQ-0041,requerimiento,2025-07-02,Supply Chain,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Media,11.5
+REQ-0042,requerimiento,2025-07-02,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,12.0
+REQ-0043,requerimiento,2025-07-03,Gestión de Personas,Don Belisario,"Finanzas, GDH y Sistemas",Diana Sebastian,Alta,22.4
+REQ-0044,requerimiento,2025-07-04,Operaciones,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.4
+REQ-0045,requerimiento,2025-07-08,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Omar Llontop,Media,11.5
+REQ-0046,requerimiento,2025-07-15,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Media,11.9
+REQ-0047,requerimiento,2025-07-16,Sistemas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Media,11.8
+REQ-0048,requerimiento,2025-07-22,Marketing,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Media,10.5
+REQ-0049,requerimiento,2025-07-24,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Alta,25.4
+REQ-0050,requerimiento,2025-07-31,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Media,11.8
+REQ-0051,requerimiento,2025-08-12,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Omar Llontop,Media,11.7
+REQ-0052,requerimiento,2025-08-14,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.5
+REQ-0053,requerimiento,2025-08-15,Comercial,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.1
+REQ-0054,requerimiento,2025-08-21,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.4
+REQ-0055,requerimiento,2025-08-29,Comercial,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Media,11.9
+REQ-0056,requerimiento,2025-09-11,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,10.9
+REQ-0057,requerimiento,2025-09-16,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.3
+REQ-0058,requerimiento,2025-09-23,Marketing,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.4
+REQ-0059,requerimiento,2025-09-23,Finanzas,Corporativo,"Finanzas, GDH y Sistemas",Omar Llontop,Alta,27.3
+REQ-0060,requerimiento,2025-09-24,Marketing,Chinawok,"Comercial, Supply y Marcas",Jorge Rios,Media,10.1
+REQ-0061,requerimiento,2025-09-24,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.0
+REQ-0062,requerimiento,2025-10-02,Operaciones,Don Belisario,"Comercial, Supply y Marcas",Luis Chavez,Media,10.7
+REQ-0063,requerimiento,2025-10-06,Sistemas,Corporativo,"Finanzas, GDH y Sistemas",Omar Llontop,Baja,3.3
+REQ-0064,requerimiento,2025-10-16,Operaciones,Papa John's,"Comercial, Supply y Marcas",Jorge Rios,Baja,3.3
+REQ-0065,requerimiento,2025-10-21,Finanzas,Don Belisario,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.4
+REQ-0066,requerimiento,2025-10-28,Supply Chain,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.2
+REQ-0067,requerimiento,2025-10-30,Comercial,Don Belisario,"Comercial, Supply y Marcas",Jorge Rios,Alta,28.2
+REQ-0068,requerimiento,2025-10-30,Marketing,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Media,10.3
+REQ-0069,requerimiento,2025-10-31,Sistemas,Papa John's,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Media,11.0
+REQ-0070,requerimiento,2025-11-04,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Baja,3.3
+REQ-0071,requerimiento,2025-11-05,Sistemas,Papa John's,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Media,11.5
+REQ-0072,requerimiento,2025-11-10,Comercial,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,25.7
+REQ-0073,requerimiento,2025-11-12,Marketing,Corporativo,"Comercial, Supply y Marcas",Luis Chavez,Alta,26.0
+REQ-0074,requerimiento,2025-11-17,Marketing,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,4.0
+REQ-0075,requerimiento,2025-11-19,Comercial,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Media,11.0
+REQ-0076,requerimiento,2025-11-26,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.6
+REQ-0077,requerimiento,2025-11-27,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,10.7
+REQ-0078,requerimiento,2025-11-28,Operaciones,Chinawok,"Comercial, Supply y Marcas",Jorge Rios,Media,11.9
+REQ-0079,requerimiento,2025-11-28,Supply Chain,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.5
+REQ-0080,requerimiento,2025-12-02,Operaciones,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Alta,25.6
+REQ-0081,requerimiento,2025-12-05,Finanzas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.5
+REQ-0082,requerimiento,2025-12-10,Gestión de Personas,Chinawok,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,11.7
+REQ-0083,requerimiento,2025-12-10,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Media,11.5
+REQ-0084,requerimiento,2025-12-11,Finanzas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Media,11.1
+REQ-0085,requerimiento,2025-12-11,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.6
+REQ-0086,requerimiento,2025-12-15,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Media,11.0
+REQ-0087,requerimiento,2025-12-18,Marketing,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.6
+REQ-0088,requerimiento,2025-12-19,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Alta,22.2
+REQ-0089,requerimiento,2025-12-19,Sistemas,Corporativo,"Finanzas, GDH y Sistemas",Diana Sebastian,Alta,24.9
+REQ-0090,requerimiento,2025-12-24,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,10.7
+REQ-0091,requerimiento,2025-12-26,Marketing,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.7
+REQ-0092,requerimiento,2025-12-26,Finanzas,Papa John's,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Baja,3.1
+REQ-0093,requerimiento,2025-12-30,Gestión de Personas,Don Belisario,"Finanzas, GDH y Sistemas",Omar Llontop,Baja,4.0
+REQ-0094,requerimiento,2026-01-07,Comercial,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.8
+REQ-0095,requerimiento,2026-01-13,Supply Chain,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.8
+REQ-0096,requerimiento,2026-01-16,Marketing,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.7
+REQ-0097,requerimiento,2026-01-19,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Baja,3.3
+REQ-0098,requerimiento,2026-01-20,Comercial,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Media,11.2
+REQ-0099,requerimiento,2026-01-26,Comercial,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Media,10.1
+REQ-0100,requerimiento,2026-01-28,Finanzas,Don Belisario,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.3
+REQ-0101,requerimiento,2026-01-28,Marketing,Bembos,"Comercial, Supply y Marcas",Jorge Rios,Baja,3.8
+REQ-0102,requerimiento,2026-01-29,Gestión de Personas,Corporativo,"Finanzas, GDH y Sistemas",Omar Llontop,Baja,3.4
+REQ-0103,requerimiento,2026-02-10,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.6
+REQ-0104,requerimiento,2026-02-16,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Alta,29.5
+REQ-0105,requerimiento,2026-02-17,Marketing,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Alta,21.1
+REQ-0106,requerimiento,2026-02-20,Operaciones,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,4.0
+REQ-0107,requerimiento,2026-02-23,Operaciones,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Alta,21.1
+REQ-0108,requerimiento,2026-02-26,Comercial,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.6
+REQ-0109,requerimiento,2026-03-03,Comercial,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,24.7
+REQ-0110,requerimiento,2026-03-12,Supply Chain,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.5
+REQ-0111,requerimiento,2026-03-12,Supply Chain,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.5
+REQ-0112,requerimiento,2026-03-13,Supply Chain,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Media,11.5
+REQ-0113,requerimiento,2026-03-17,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,10.7
+REQ-0114,requerimiento,2026-03-23,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Media,11.7
+REQ-0115,requerimiento,2026-03-25,Operaciones,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Media,10.9
+REQ-0116,requerimiento,2026-03-25,Comercial,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.4
+REQ-0117,requerimiento,2026-03-26,Supply Chain,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,21.9
+REQ-0118,requerimiento,2026-03-31,Supply Chain,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Media,10.6
+REQ-0119,requerimiento,2026-04-06,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.2
+REQ-0120,requerimiento,2026-04-07,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.5
+REQ-0121,requerimiento,2026-04-14,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Alta,26.0
+REQ-0122,requerimiento,2026-04-14,Sistemas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.2
+REQ-0123,requerimiento,2026-04-15,Supply Chain,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.4
+REQ-0124,requerimiento,2026-04-16,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.4
+REQ-0125,requerimiento,2026-04-16,Comercial,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.0
+REQ-0126,requerimiento,2026-04-22,Gestión de Personas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Baja,3.6
+REQ-0127,requerimiento,2026-04-22,Supply Chain,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,24.4
+REQ-0128,requerimiento,2026-04-23,Marketing,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.9
+REQ-0129,requerimiento,2026-04-27,Finanzas,Dunkin,"Finanzas, GDH y Sistemas",Omar Llontop,Alta,21.4
+REQ-0130,requerimiento,2026-04-28,Supply Chain,Papa John's,"Comercial, Supply y Marcas",Jorge Rios,Baja,3.8
+REQ-0131,requerimiento,2026-04-30,Gestión de Personas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Alta,28.3
+REQ-0132,requerimiento,2026-05-05,Gestión de Personas,Don Belisario,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.9
+REQ-0133,requerimiento,2026-05-06,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.6
+REQ-0134,requerimiento,2026-05-07,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.9
+REQ-0135,requerimiento,2026-05-12,Supply Chain,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.6
+REQ-0136,requerimiento,2026-05-13,Supply Chain,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.4
+REQ-0137,requerimiento,2026-05-18,Comercial,Don Belisario,"Comercial, Supply y Marcas",Jorge Rios,Baja,3.6
+REQ-0138,requerimiento,2026-05-20,Marketing,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,25.4
+REQ-0139,requerimiento,2026-05-26,Operaciones,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.6
+REQ-0140,requerimiento,2026-05-28,Sistemas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.0
+REQ-0141,requerimiento,2026-06-01,Sistemas,Don Belisario,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.9
+REQ-0142,requerimiento,2026-06-10,Comercial,Don Belisario,"Comercial, Supply y Marcas",Jorge Nuñez,Media,10.7
+REQ-0143,requerimiento,2026-06-12,Comercial,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Media,10.4
+REQ-0144,requerimiento,2026-06-12,Supply Chain,Papa John's,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.3
+REQ-0145,requerimiento,2026-06-16,Marketing,Corporativo,"Comercial, Supply y Marcas",Jorge Rios,Alta,29.9
+REQ-0146,requerimiento,2026-06-19,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Media,11.2
+REQ-0147,requerimiento,2026-06-23,Supply Chain,Dunkin,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.2
+REQ-0148,requerimiento,2026-06-24,Supply Chain,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.2
+REQ-0149,requerimiento,2026-07-01,Finanzas,Dunkin,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.4
+REQ-0150,requerimiento,2026-07-01,Finanzas,Papa John's,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.5
+REQ-0151,requerimiento,2026-07-02,Supply Chain,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Media,10.3
+REQ-0152,requerimiento,2026-07-06,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.4
+REQ-0153,requerimiento,2026-07-08,Sistemas,Papa John's,"Finanzas, GDH y Sistemas",Omar Llontop,Alta,27.8
+REQ-0154,requerimiento,2026-07-09,Gestión de Personas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Alta,22.9
+REQ-0155,requerimiento,2026-07-13,Gestión de Personas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,10.9
+REQ-0156,requerimiento,2026-07-14,Operaciones,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.0
+REQ-0157,requerimiento,2026-07-14,Finanzas,Papa John's,"Finanzas, GDH y Sistemas",Diana Sebastian,Media,11.5
+REQ-0158,requerimiento,2026-07-16,Operaciones,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Media,10.4
+REQ-0159,requerimiento,2026-07-17,Sistemas,Dunkin,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.6
+REQ-0160,requerimiento,2026-07-21,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.7
+REQ-0161,requerimiento,2026-07-21,Comercial,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.9
+REQ-0162,requerimiento,2026-08-03,Marketing,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Baja,3.7
+REQ-0163,requerimiento,2026-08-11,Operaciones,Corporativo,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,28.5
+REQ-0164,requerimiento,2026-08-13,Sistemas,Popeyes,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Media,11.6
+REQ-0165,requerimiento,2026-08-19,Sistemas,Chinawok,"Finanzas, GDH y Sistemas",Omar Llontop,Media,10.7
+REQ-0166,requerimiento,2026-08-24,Comercial,Popeyes,"Comercial, Supply y Marcas",Jorge Rios,Media,10.3
+REQ-0167,requerimiento,2026-08-26,Finanzas,Corporativo,"Finanzas, GDH y Sistemas",Omar Llontop,Alta,22.6
+REQ-0168,requerimiento,2026-09-02,Comercial,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Media,11.1
+REQ-0169,requerimiento,2026-09-09,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Alta,21.0
+REQ-0170,requerimiento,2026-09-10,Comercial,Corporativo,"Comercial, Supply y Marcas",Jorge Rios,Media,11.7
+REQ-0171,requerimiento,2026-09-15,Supply Chain,Bembos,"Comercial, Supply y Marcas",Luis Chavez,Alta,29.5
+REQ-0172,requerimiento,2026-09-21,Operaciones,Bembos,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.4
+REQ-0173,requerimiento,2026-09-21,Operaciones,Popeyes,"Comercial, Supply y Marcas",Luis Chavez,Alta,27.4
+REQ-0174,requerimiento,2026-09-21,Supply Chain,Popeyes,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,26.5
+REQ-0175,requerimiento,2026-09-29,Gestión de Personas,Don Belisario,"Finanzas, GDH y Sistemas",Jean Pierre Prati,Media,10.2
+REQ-0176,requerimiento,2026-10-01,Comercial,Corporativo,"Comercial, Supply y Marcas",Luis Chavez,Media,11.2
+REQ-0177,requerimiento,2026-10-07,Operaciones,Chinawok,"Comercial, Supply y Marcas",Jorge Rios,Media,11.3
+REQ-0178,requerimiento,2026-10-07,Gestión de Personas,Popeyes,"Finanzas, GDH y Sistemas",Diana Sebastian,Baja,3.8
+REQ-0179,requerimiento,2026-10-09,Finanzas,Popeyes,"Finanzas, GDH y Sistemas",Omar Llontop,Media,11.0
+REQ-0180,requerimiento,2026-10-12,Supply Chain,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.3
+REQ-0181,requerimiento,2026-10-14,Operaciones,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Alta,28.6
+REQ-0182,requerimiento,2026-10-16,Marketing,Papa John's,"Comercial, Supply y Marcas",Luis Chavez,Media,10.5
+REQ-0183,requerimiento,2026-10-16,Comercial,Dunkin,"Comercial, Supply y Marcas",Jorge Nuñez,Alta,22.2
+REQ-0184,requerimiento,2026-10-20,Marketing,Chinawok,"Comercial, Supply y Marcas",Jorge Nuñez,Baja,3.7
+REQ-0185,requerimiento,2026-10-21,Finanzas,Bembos,"Finanzas, GDH y Sistemas",Diana Sebastian,Alta,28.2
+REQ-0186,requerimiento,2026-10-30,Supply Chain,Chinawok,"Comercial, Supply y Marcas",Luis Chavez,Media,11.6
