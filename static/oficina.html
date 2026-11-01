@@ -80,7 +80,7 @@
   <div class="stage"><svg id="ofi" viewBox="0 0 1280 700" role="img" aria-label="Oficina animada del equipo de data"></svg>
     <div id="err">No se pudieron cargar los datos del motor.</div></div>
   <div class="timeline">
-    <div class="ctrl"><button id="play">⏸ Pausa</button><button id="vel">Velocidad ×1</button><button id="reiniciar" title="Volver a enero sin pendientes">↺ Enero</button></div>
+    <div class="ctrl"><button id="play">⏸ Pausa</button><button id="vel">Velocidad ×1</button><button id="reiniciar" title="Borra la simulación y deja todo en blanco, en pausa en enero">↺ Reiniciar</button></div>
     <div id="meses"></div>
   </div>
   <div class="tabla" id="tablaH"></div>
@@ -907,8 +907,18 @@ function tick(now){
   requestAnimationFrame(tick);
 }
 
-document.getElementById("play").onclick = e => { playing = !playing; e.target.textContent = playing ? "⏸ Pausa" : "▶ Play"; };
-document.getElementById("reiniciar").onclick = () => { sim = {}; espera = []; setMes(1); };
+document.getElementById("play").onclick = e => {
+  playing = !playing; e.target.textContent = playing ? "⏸ Pausa" : "▶ Play";
+  if (playing && !sim[mes]) setMes(mes);   // tras reiniciar, la corrida arranca de cero en el mes actual
+};
+document.getElementById("reiniciar").onclick = () => {
+  // deja la corrida en blanco: sin meses simulados, sin pendientes, sin rechazados, en pausa al inicio de enero
+  playing = false; document.getElementById("play").textContent = "▶ Play";
+  sim = {}; espera = []; rechazados = [];
+  mes = 1; setMes(1);
+  sim = {}; plan = []; spawned = 0; elapsed = 0;
+  renderEspera(); renderRechazados(); renderTabla(); pintarProgreso();
+};
 document.getElementById("vel").onclick = e => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; e.target.textContent = "Velocidad ×" + speed; };
 
 (async () => {
