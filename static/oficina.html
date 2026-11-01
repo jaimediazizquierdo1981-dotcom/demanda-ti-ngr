@@ -75,6 +75,7 @@
     <div class="ctrl"><button id="play">⏸ Pausa</button><button id="vel">Velocidad ×1</button><button id="reiniciar" title="Volver a enero sin pendientes">↺ Enero</button></div>
     <div id="meses"></div>
   </div>
+  <div class="tabla" id="tablaT"></div>
   <div class="tabla" id="tablaP"></div>
   <div class="tabla" id="tablaR"></div>
   <div class="legend">
@@ -558,8 +559,28 @@ function renderTabla(){
         D.resumen.map(r => fn(r).replace('class="', i===filas.length-1 ? 'class="last ' : 'class="')).join("")).join("");
   };
 
-  cuadro("tablaP", "Proyectos", "TI + transformacionales · tienen prioridad sobre los pedidos", {
+  const reqPendOut = r => {
+    if (sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)) return sim[r.mes].cerrado ? sim[r.mes].pendiente : espera.reduce((t,v)=>t+v.horas,0);
+    return Math.max(0, r.pendiente_cierre - CASCADA[r.mes].pendOut);
+  };
+  const simulado = r => !!(sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes));
+
+  cuadro("tablaT", "Total del equipo", "proyectos + requerimientos + incidencias", {
     dispNota: "horas del equipo (ya sin vacaciones, descansos ni gestión)",
+    disp: r => r.horas_netas,
+    proy: r => r.horas_proyectos + r.horas_req_inc_plan,
+    realNota: "proyectos + pedidos que llegaron (simulación)",
+    real: r => sim[r.mes] ? r.horas_proyectos + sim[r.mes].reales : null,
+    pendIn: r => sim[r.mes] ? CASCADA[r.mes].pendIn + pendAnteriorR(r.mes) : null,
+    saldo: r => (!sim[r.mes] || enCurso(r)) ? null : r.horas_netas - r.horas_proyectos - sim[r.mes].reales - CASCADA[r.mes].pendIn - pendAnteriorR(r.mes),
+    pendNota: "simulación · gris = estimado del modelo",
+    pendOut: r => CASCADA[r.mes].pendOut + reqPendOut(r),
+    pendGris: r => !simulado(r),
+    terceros: r => Math.ceil(Math.max(0, r.horas_proyectos + r.horas_req_inc_plan - r.horas_netas) / h3 - 1e-9),
+  });
+
+  cuadro("tablaP", "Proyectos", "TI + transformacionales · tienen prioridad sobre los pedidos", {
+    dispNota: "las del equipo (ver Total): los proyectos van primero",
     disp: r => r.horas_netas,
     proy: r => r.horas_proyectos,
     realNota: "los proyectos se ejecutan según su plan",
