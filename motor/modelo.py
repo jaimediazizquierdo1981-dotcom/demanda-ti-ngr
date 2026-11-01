@@ -354,22 +354,52 @@ def ejecutar(cfg: dict | None = None, data_dir: Path = DATA) -> dict:
 
     res["alertar_en"] = [alerta(m, n) for m, n in zip(res["mes"], res["personas_adicionales"])]
 
-    # Arrastre: lo que no se resuelve en un mes pasa al siguiente (sin terceros)
-    arrastrar = c["criterios"].get("arrastre_pendientes", True)
-    entrante, pend = [], []
-    acum = 0.0
-    for dem, cap_m in zip(res["demanda_total_plan"], res["horas_netas"]):
-        entrante.append(acum)
-        resto = max(0.0, dem + acum - cap_m)
-        pend.append(resto)
-        acum = resto if arrastrar else 0.0
-    res["arrastre_entrante"] = entrante
-    res["pendiente_cierre"] = pend
-    # Terceros: cubren cada mes lo que excede la capacidad del equipo, así no se acumula pendiente
+    # Terceros contratados: aportan horas solo para requerimientos e incidencias.
+    # El primer mes rinden al 50% (rampa) y desde el segundo al 100%.
     h3 = float(c["capacidad"].get("horas_mes_tercero", 160)) or 160.0
-    res["exceso_horas"] = np.maximum(0, res["demanda_total_plan"] - res["horas_netas"])
-    res["exceso_horas"] = np.where(res["exceso_horas"] > tol, res["exceso_horas"], 0)
-    res["terceros"] = np.ceil(res["exceso_horas"] / h3).astype(int)
+    rampa = float(c["capacidad"].get("rampa_primer_mes_tercero", 0.5))
+    def horas_tercero(t: dict, m: int) -> float:
+        ini = int(t.get("inicio") or 1)
+        fin = int(t.get("fin") or 12)
+        if m < ini or m > fin:
+            return 0.0
+        return h3 * (rampa if m == ini else 1.0)
+    terceros_cfg = [t for t in c.get("terceros", []) if t.get("incluir", True)]
+    res["horas_terceros"] = [sum(horas_tercero(t, m) for t in terceros_cfg) for m in res["mes"]]
+    res["terceros_activos"] = [sum(1 for t in terceros_cfg if horas_tercero(t, m) > 0) for m in res["mes"]]
+
+    # Cascada: los proyectos van primero con las horas del equipo; requerimientos e incidencias
+    # usan lo que sobra más las horas de los terceros. Lo no resuelto pasa al mes siguiente.
+    arrastrar = c["criterios"].get("arrastre_pendientes", True)
+    pend_p = pend_r = 0.0
+    filas_c = []
+    for _, x in res.iterrows():
+        saldo_p = x["horas_netas"] - x["Tecnologia"] - x["Transformacional"] - pend_p
+        libres = max(0.0, saldo_p) + x["horas_terceros"]
+        saldo_r = libres - x["horas_req_inc_plan"] - pend_r
+        filas_c.append({"pend_proy_entrante": pend_p, "pend_req_entrante": pend_r,
+                        "libres_req_inc": libres,
+                        "pend_proy_cierre": max(0.0, -saldo_p), "pend_req_cierre": max(0.0, -saldo_r)})
+        pend_p = max(0.0, -saldo_p) if arrastrar else 0.0
+        pend_r = max(0.0, -saldo_r) if arrastrar else 0.0
+    cas = pd.DataFrame(filas_c)
+    for k in cas.columns:
+        res[k] = cas[k].values
+    res["arrastre_entrante"] = res["pend_proy_entrante"] + res["pend_req_entrante"]
+    res["pendiente_cierre"] = res["pend_proy_cierre"] + res["pend_req_cierre"]
+    res["brecha_horas"] = res["horas_netas"] + res["horas_terceros"] - res["demanda_total_plan"]
+    res["utilizacion"] = np.where(res["horas_netas"] + res["horas_terceros"] > 0,
+                                  res["demanda_total_plan"] / (res["horas_netas"] + res["horas_terceros"]).replace(0, np.nan), 0)
+
+    # Terceros que aún faltarían en cada mes (además de los ya contratados) para no acumular pendiente
+    exceso_p = np.maximum(0, res["Tecnologia"] + res["Transformacional"] - res["horas_netas"])
+    exceso_r = np.maximum(0, res["horas_req_inc_plan"]
+                          - (np.maximum(0, res["horas_netas"] - res["Tecnologia"] - res["Transformacional"]) + res["horas_terceros"]))
+    res["exceso_horas"] = np.where(exceso_p + exceso_r > tol, exceso_p + exceso_r, 0)
+    res["terceros"] = np.ceil(res["exceso_horas"] / h3 - 1e-9).astype(int)
+    res["personas_adicionales"] = np.where(
+        res["brecha_horas"] < -tol, np.ceil(-res["brecha_horas"] / horas_netas_persona), 0).astype(int)
+    res["alertar_en"] = [alerta(m, n) for m, n in zip(res["mes"], res["personas_adicionales"])]
     res.insert(1, "mes_nombre", [MESES[m - 1] for m in res["mes"]])
     res = res.replace([np.inf, -np.inf], 0)
     return {"resumen": res, "capacidad_persona": cap, "proyectos": proy, "pronostico": prono,

@@ -40,6 +40,8 @@ def _salida(o: dict) -> dict:
         "dispatcher": c.get("dispatcher", {"tasa_rechazo": 0, "motivos": {}}),
         "prioridad_incidencias": c.get("prioridad_incidencias", {"Alto": 1, "Medio": 2, "Bajo": 3}),
         "horas_mes_tercero": float(c["capacidad"].get("horas_mes_tercero", 160)),
+        "rampa_tercero": float(c["capacidad"].get("rampa_primer_mes_tercero", 0.5)),
+        "terceros": c.get("terceros", []),
         "resumen": o["resumen"].round(2).to_dict(orient="records"),
         "personas": personas,
         "proyectos": pr.to_dict(orient="records"),

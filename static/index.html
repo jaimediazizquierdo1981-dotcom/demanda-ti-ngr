@@ -56,6 +56,7 @@ calcular().then(d => {
     fila("Colchón de variabilidad (req. + inc.)", r => r.colchon) +
     fila("Demanda total", r => r.demanda_total_plan, "tot sep") +
     fila("Horas del equipo (sin vacaciones, descansos ni gestión)", r => r.horas_netas, "tot") +
+    fila("+ Terceros contratados (solo req. e inc.)", r => r.horas_terceros, "", fmtH) +
     fila("Libres para req. e incidencias (horas del equipo − proyectos)", r => r.horas_netas - r.horas_proyectos, "brecha", v => (v>0?"+":"") + fmtH(v)) +
     fila("Brecha", r => r.brecha_horas, "tot brecha", v => (v>0?"+":"") + fmtH(v)) +
     `<tr><td>Utilización</td>${R.map(r=>`<td>${util(r.utilizacion)}</td>`).join("")}<td>${util(dem/cap)}</td></tr>` +

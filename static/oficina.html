@@ -55,6 +55,13 @@
   @keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
   .bob{animation:bob 2.4s ease-in-out infinite}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  .ter{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+  .ter select,.ter button{font:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:5px 9px;background:#fff;cursor:pointer}
+  .ter button.add{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:600}
+  .ter .chip{display:flex;gap:6px;align-items:center;background:#eaf6ef;border:1px solid #bfe3cf;border-radius:999px;padding:3px 6px 3px 12px;font-size:12.5px}
+  .ter .chip b{color:#1f6b47}
+  .ter .chip button{border:none;background:none;color:#b55;padding:2px 6px}
+  .ter .lbl{font-size:12px;color:var(--muted)}
   #err{display:none;padding:40px;text-align:center;color:var(--bad)}
 </style>
 </head>
@@ -65,6 +72,7 @@
   <div>
     <h1>Piso de Data · NGR 2027</h1>
     <div class="sub">Datos ficticios · La oficina se mueve con lo que proyecta el motor estadístico</div>
+    <div class="ter" id="tercerosUI"></div>
   </div>
   <div class="kpis" id="kpis"></div>
 </header>
@@ -137,6 +145,43 @@ for (let j=0;j<3;j++) for (let i=0;i<4;i++) SILLAS_ESPERA.push({x:95+i*42, y:528
 for (let j=0;j<2;j++) for (let i=0;i<5;i++) SILLAS_RECH.push({x:92+i*34, y:96+j*48});
 let DESKS = {}, GHOSTS = [];
 function squadNum(s){ return /Comercial/i.test(s) ? 1 : 2; }
+
+// ---------- Terceros ----------
+let CFG_O = null;   // configuración que usa la oficina (la misma que la pestaña Parámetros)
+function terceros(){ return (CFG_O && CFG_O.terceros) || []; }
+function horasTercero(t, m){
+  const ini = +t.inicio || 1, fin = +t.fin || 12;
+  if (m < ini || m > fin) return 0;
+  return (D.horas_mes_tercero || 160) * (m === ini ? (D.rampa_tercero ?? .5) : 1);
+}
+function slotDe(clave){ const [sq, i] = String(clave || "").split("-").map(Number); return SLOTS[sq] && SLOTS[sq][i] ? {...SLOTS[sq][i], sq, clave} : null; }
+async function recalcularConTerceros(){
+  guardarCfg(CFG_O);
+  const d = await calcular(CFG_O);
+  D = d; calcularCascada(); asignarPuestos(); buildStatic(); buildTimeline(); renderTercerosUI();
+  irAMes(mes);
+  const chip = document.querySelector(".chip-cfg"); if (chip) chip.outerHTML = '<span class="chip-cfg">Parámetros modificados</span>';
+}
+function renderTercerosUI(){
+  const M = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const ops = (sel, desde = 1, vacio) => (vacio ? `<option value="">${vacio}</option>` : "") +
+    M.map((m, i) => i + 1 >= desde ? `<option value="${i+1}" ${+sel === i+1 ? "selected" : ""}>${m}</option>` : "").join("");
+  const lista = terceros().map((t, i) => `<span class="chip"><b>${t.nombre}</b> · entra ${M[(+t.inicio||1)-1]} (50% ese mes)
+      · sale <select data-fin="${i}">${ops(t.fin, +t.inicio || 1, "—")}</select>
+      <button title="Retirar tercero" data-del="${i}">✕</button></span>`).join("");
+  document.getElementById("tercerosUI").innerHTML =
+    `<span class="lbl">Terceros (solo req. e inc.):</span>
+     <select id="terMes">${ops(mes)}</select><button class="add" id="terAdd">+ Agregar tercero</button>${lista}
+     ${terceros().length ? '<span class="lbl">Arrastra su escritorio a cualquier puesto libre.</span>' : ""}`;
+  document.getElementById("terAdd").onclick = () => {
+    CFG_O.terceros = terceros();
+    const n = CFG_O.terceros.reduce((mx, t) => Math.max(mx, +String(t.nombre).replace(/\D/g, "") || 0), 0) + 1;
+    CFG_O.terceros.push({id: Date.now(), nombre: "Tercero " + n, inicio: +document.getElementById("terMes").value, fin: null, squad: 1, slot: null, incluir: true});
+    recalcularConTerceros();
+  };
+  document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { CFG_O.terceros.splice(+b.dataset.del, 1); recalcularConTerceros(); });
+  document.querySelectorAll("[data-fin]").forEach(sl => sl.onchange = () => { CFG_O.terceros[+sl.dataset.fin].fin = sl.value ? +sl.value : null; recalcularConTerceros(); });
+}
 function asignarPuestos(){
   DESKS = {};
   const libres = {1: [...SLOTS[1]], 2: [...SLOTS[2]]};
@@ -144,6 +189,20 @@ function asignarPuestos(){
   for (const p of orden) {
     const sq = squadNum(p.squad); const slot = libres[sq].shift() || libres[3-sq].shift();
     if (slot) DESKS[p.persona] = {...slot, sq};
+  }
+  const ocupado = sl => !libres[sl.sq].some(x => x.x === sl.x && x.y === sl.y);
+  const tomar = sl => { libres[sl.sq] = libres[sl.sq].filter(x => !(x.x === sl.x && x.y === sl.y)); };
+  for (const t of terceros()) {
+    let sl = slotDe(t.slot);
+    if (!sl || ocupado(sl)) {
+      const sq = +t.squad || 1, x = libres[sq][0] || libres[3-sq][0];
+      if (!x) continue;
+      const lado = libres[sq][0] ? sq : 3 - sq;
+      sl = {...x, sq: lado, clave: lado + "-" + SLOTS[lado].findIndex(z => z.x === x.x && z.y === x.y)};
+      t.slot = sl.clave; t.squad = lado;
+    }
+    tomar(sl);
+    DESKS[t.nombre] = {x: sl.x, y: sl.y, sq: sl.sq, tercero: t};
   }
   GHOSTS = [];
   for (let i = 0; i < 12 && (libres[1].length || libres[2].length); i++) {
@@ -272,12 +331,13 @@ function buildStatic(){
   deskInfo = {};
   for (const [nombre, d] of Object.entries(DESKS)) {
     const g = el("g", {}, deskLayer);
-    const info = D.personas.find(p => p.persona === nombre) || {rol:"Equipo"};
+    const info = d.tercero ? {rol:"Tercero", genero: hash(nombre) % 2 ? "Mujer" : "Hombre"} : (D.personas.find(p => p.persona === nombre) || {rol:"Equipo"});
+    if (d.tercero) { el("rect", {x:d.x-62, y:d.y-44, width:124, height:142, rx:10, fill:"#eaf6ef", stroke:"var(--ok)", "stroke-dasharray":"5 4"}, g); g.style.cursor = "grab"; hacerArrastrable(g, d.tercero); }
     el("rect", {x:d.x-55, y:d.y-38, width:110, height:44, rx:7, fill:"var(--wood)", stroke:"var(--wood2)"}, g);
     el("rect", {x:d.x-18, y:d.y-34, width:36, height:20, rx:3, fill:"#2b3240"}, g);
     const screen = el("rect", {x:d.x-15, y:d.y-31, width:30, height:14, rx:2, fill:"#6ee7ff", opacity:.6}, g);
-    person(g, d.x, d.y+26, d.sq===1 ? "var(--sq1)" : "var(--sq2)",
-           lookAleatorio(info.genero === "Mujer", hash(nombre)), info.rol==="Jefe" ? "🧭" : "");
+    person(g, d.x, d.y+26, d.tercero ? "var(--ok)" : d.sq===1 ? "var(--sq1)" : "var(--sq2)",
+           lookAleatorio(info.genero === "Mujer", hash(nombre)), info.rol==="Jefe" ? "🧭" : d.tercero ? "🤝" : "");
     txt(d.x, d.y+56, nombre, {"text-anchor":"middle", "font-size":12, "font-weight":600}, g);
     const sub = txt(d.x, d.y+69, "", {"text-anchor":"middle", "font-size":10, fill:"var(--muted)"}, g);
     // barra de horas disponibles
@@ -287,8 +347,29 @@ function buildStatic(){
     const vac = txt(d.x+44, d.y+22, "", {"font-size":16}, g);
     const pile = el("g", {}, g);
     const fx = el("g", {}, g);
-    deskInfo[nombre] = {g, screen, sub, bar, disp, vac, pile, fx, tickets:0, rol:info.rol, sq:d.sq, netas:0, disponible:0};
+    deskInfo[nombre] = {g, screen, sub, bar, disp, vac, pile, fx, tickets:0, rol:info.rol, sq:d.sq, netas:0, disponible:0, tercero: d.tercero || null};
   }
+}
+
+// Arrastrar el escritorio de un tercero a otro puesto libre
+function hacerArrastrable(g, t){
+  let ini = null;
+  const pto = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+  g.addEventListener("pointerdown", e => { ini = pto(e); g.setPointerCapture(e.pointerId); g.style.cursor = "grabbing"; e.preventDefault(); });
+  g.addEventListener("pointermove", e => { if (!ini) return; const p = pto(e); g.setAttribute("transform", `translate(${p.x-ini.x},${p.y-ini.y})`); });
+  g.addEventListener("pointerup", e => {
+    if (!ini) return; const p = pto(e), d = DESKS[t.nombre]; ini = null; g.style.cursor = "grab";
+    // puesto libre más cercano al punto donde se soltó
+    const ocupados = Object.entries(DESKS).filter(([n]) => n !== t.nombre).map(([, x]) => x.x + "," + x.y);
+    let mejor = null, dist = 1e9;
+    [1, 2].forEach(sq => SLOTS[sq].forEach((sl, i) => {
+      if (ocupados.includes(sl.x + "," + sl.y)) return;
+      const dd = Math.hypot(sl.x - p.x, sl.y - p.y);
+      if (dd < dist) { dist = dd; mejor = {sq, i}; }
+    }));
+    if (mejor && dist < 160) { t.slot = mejor.sq + "-" + mejor.i; t.squad = mejor.sq; guardarCfg(CFG_O); }
+    asignarPuestos(); buildStatic(); irAMes(mes);
+  });
 }
 
 // ---------- Por mes ----------
@@ -371,11 +452,11 @@ function iniciarDisponibles(){
     const m = p ? p.meses.find(x => x.mes === mes) : null;
     netas[nombre] = m ? m.horas_netas : 0;
   }
+  for (const n in netas) if (deskInfo[n].tercero) delete netas[n];
   const carga = cargaProyectosPorPersona(mes, netas);
   for (const [nombre, d] of Object.entries(deskInfo)) {
-    d.netas = netas[nombre];
-    d.proyectos = carga[nombre];
-    d.disponible = d.netas - d.proyectos;
+    if (d.tercero) { d.netas = d.disponible = horasTercero(d.tercero, mes); d.proyectos = 0; }
+    else { d.netas = netas[nombre]; d.proyectos = carga[nombre]; d.disponible = d.netas - d.proyectos; }
     pintarDisponible(nombre);
   }
 }
@@ -396,6 +477,14 @@ function renderDesks(){
     const m = p ? p.meses.find(x => x.mes === mes) : null;
     const vacD = m ? Math.round(m.horas_vacaciones / 8) : 0;
     d.vac.textContent = vacD ? "🌴" : "";
+    if (d.tercero) {
+      const h = horasTercero(d.tercero, mes), ini = +d.tercero.inicio || 1;
+      d.g.setAttribute("opacity", h > 0 ? 1 : .4);
+      d.sub.textContent = h <= 0 ? (mes < ini ? "ingresa en " + ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"][ini-1] : "ya salió")
+                                 : (mes === ini ? "1er mes al 50% · " : "") + fmt(h) + " h · solo req. e inc.";
+      d.tickets = 0; d.pile.innerHTML = ""; d.fx.innerHTML = "";
+      continue;
+    }
     d.sub.textContent = (m ? fmt(m.horas_netas) + " h netas" : "") + (vacD ? " · " + vacD + " d vacaciones" : "");
     d.screen.setAttribute("fill", colorUtil(r.utilizacion));
     d.tickets = 0; d.pile.innerHTML = ""; d.fx.innerHTML = "";
@@ -453,11 +542,10 @@ function buildTimeline(){
 // Proyectos: tienen prioridad. Si no entran en las horas del equipo, el saldo pasa al mes siguiente.
 let CASCADA = [];
 function calcularCascada(){
-  CASCADA = []; let pend = 0;
+  CASCADA = [];
   for (const r of D.resumen) {
-    const saldo = r.horas_netas - r.horas_proyectos - pend;
-    CASCADA[r.mes] = {pendIn: pend, saldo, pendOut: Math.max(0, -saldo), libres: Math.max(0, saldo)};
-    pend = Math.max(0, -saldo);
+    const saldo = r.horas_netas - r.horas_proyectos - r.pend_proy_entrante;
+    CASCADA[r.mes] = {pendIn: r.pend_proy_entrante, saldo, pendOut: r.pend_proy_cierre, libres: r.libres_req_inc, terceros: r.horas_terceros};
   }
 }
 function excesoProyectos(m){ return 0; }   // el exceso de proyectos se lleva en su propio cuadro
@@ -519,9 +607,11 @@ function disponiblesMes(m){
     const mm = p ? p.meses.find(x => x.mes === m) : null;
     netas[nombre] = mm ? mm.horas_netas : 0;
   }
+  for (const n in netas) if (DESKS[n].tercero) delete netas[n];
   const carga = cargaProyectosPorPersona(m, netas);
   const disp = {};
   for (const n in netas) disp[n] = netas[n] - carga[n];
+  for (const [n, d] of Object.entries(DESKS)) if (d.tercero) disp[n] = horasTercero(d.tercero, m);
   return {disp, proyMes};
 }
 function asignarRapido(disp, sq, horas){  // misma regla que el jefe en la animación
@@ -610,6 +700,7 @@ function renderTabla(){
     ['− Descansos médicos', r => val(fmt(r.horas_descanso_medico), cur(r))],
     ['− Gestión de jefes', r => val(fmt(r.horas_gestion), cur(r))],
     ['= Horas del equipo<small>para proyectos, requerimientos e incidencias</small>', r => val("<b>" + fmt(r.horas_netas) + "</b>", cur(r))],
+    ['+ Terceros<small>solo req. e inc. · 1er mes al 50%</small>', r => val(r.horas_terceros >= .5 ? "+" + fmt(r.horas_terceros) : "–", (r.horas_terceros >= .5 ? "pos" : "") + cur(r))],
   ];
   document.getElementById("tablaH").innerHTML = `<div class="tit">Horas del equipo<small>lo que el equipo puede trabajar en el mes</small></div>` +
     filasH.map(([lbl, fn], i) => `<div class="lbl${i===filasH.length-1?" last":""}">${lbl}</div>` +
@@ -630,7 +721,7 @@ function renderTabla(){
   });
 
   cuadro("tablaR", "Requerimientos e incidencias", "usan las horas que dejan libres los proyectos", {
-    dispNota: "lo que dejan libre los proyectos",
+    dispNota: "lo que dejan libre los proyectos + terceros",
     disp: r => CASCADA[r.mes].libres,
     proy: r => r.horas_req_inc_plan,
     realNota: "simulación · en curso = hasta hoy",
@@ -640,10 +731,11 @@ function renderTabla(){
     pendNota: "simulación · gris = estimado del modelo",
     pendOut: r => {
       if (sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)) return sim[r.mes].cerrado ? sim[r.mes].pendiente : espera.reduce((t,v)=>t+v.horas,0);
-      return Math.max(0, r.pendiente_cierre - CASCADA[r.mes].pendOut);
+      return r.pend_req_cierre;
     },
     pendGris: r => !(sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)),
     terceros: r => Math.ceil(Math.max(0, r.horas_req_inc_plan - CASCADA[r.mes].libres) / h3 - 1e-9),
+    tercerosNota: "adicionales a los ya contratados",
   });
 }
 
@@ -819,8 +911,12 @@ document.getElementById("play").onclick = e => { playing = !playing; e.target.te
 document.getElementById("reiniciar").onclick = () => { sim = {}; espera = []; setMes(1); };
 document.getElementById("vel").onclick = e => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; e.target.textContent = "Velocidad ×" + speed; };
 
-calcular().then(d => {
-  D = d; calcularCascada(); asignarPuestos(); buildStatic(); buildTimeline(); setMes(1); requestAnimationFrame(tick);
+(async () => {
+  CFG_O = leerCfg() || await (await fetch("/api/config/base")).json();
+  CFG_O.terceros = CFG_O.terceros || [];
+  return calcular(CFG_O);
+})().then(d => {
+  D = d; calcularCascada(); asignarPuestos(); buildStatic(); buildTimeline(); renderTercerosUI(); setMes(1); requestAnimationFrame(tick);
 }).catch(() => { document.getElementById("err").style.display = "block"; svg.style.display = "none"; });
 </script>
 </body>

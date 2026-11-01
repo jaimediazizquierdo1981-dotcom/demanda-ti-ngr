@@ -17,7 +17,8 @@
     "horas_por_dia": 8,
     "dias_descanso_medico_anual": 5,
     "horas_gestion_dia_jefe": 2,
-    "horas_mes_tercero": 160
+    "horas_mes_tercero": 160,
+    "rampa_primer_mes_tercero": 0.5
   },
   "demanda": {
     "metodo": "promedio",
@@ -74,5 +75,6 @@
     "Alto": 1,
     "Medio": 2,
     "Bajo": 3
-  }
+  },
+  "terceros": []
 }
