@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Piso de Data · NGR 2027</title>
+<style>
+  :root{
+    --bg:#f3f1ec; --ink:#1f2430; --muted:#6b7280; --line:#d9d4c9;
+    --floor:#faf8f4; --wood:#c9a77c; --wood2:#b38d5f;
+    --sq1:#2f6fd6; --sq2:#7c4dd6; --req:#2f6fd6; --inc:#e0453a;
+    --ok:#2e9e6a; --warn:#e5a12a; --bad:#d64545; --glass:#e8f1f8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 "Segoe UI",system-ui,-apple-system,Arial,sans-serif}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:18px 24px 6px;flex-wrap:wrap}
+  h1{margin:0;font-size:20px;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:12.5px}
+  .kpis{display:flex;gap:10px;flex-wrap:wrap}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:112px}
+  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .kpi .v{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+  .kpi.bad .v{color:var(--bad)} .kpi.ok .v{color:var(--ok)} .kpi.warn .v{color:var(--warn)}
+  main{padding:4px 24px 18px}
+  .stage{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  svg{display:block;width:100%;height:auto}
+  .timeline{display:flex;align-items:stretch;gap:6px;margin-top:12px}
+  .ctrl{display:flex;gap:6px}
+  button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+  button:hover{border-color:#aaa}
+  .mes{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px 4px;border-radius:8px;border:1px solid transparent;background:transparent}
+  .mes.sel{background:#fff;border-color:var(--ink)}
+  .mes .bar{width:70%;height:46px;background:#ece8df;border-radius:4px;position:relative;overflow:hidden}
+  .mes .bar i{position:absolute;left:0;right:0;bottom:0;border-radius:4px}
+  .mes .bar b{position:absolute;left:0;right:0;border-top:2px dashed #555}
+  .mes span{font-size:12px} .mes small{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:10px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  text{font-family:"Segoe UI",system-ui,Arial,sans-serif}
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+  .bob{animation:bob 2.4s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  #err{display:none;padding:40px;text-align:center;color:var(--bad)}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Piso de Data · NGR 2027</h1>
+    <div class="sub">Datos ficticios · La oficina se mueve con lo que proyecta el motor estadístico</div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+</header>
+<main>
+  <div class="stage"><svg id="ofi" viewBox="0 0 1280 700" role="img" aria-label="Oficina animada del equipo de data"></svg>
+    <div id="err">No se pudieron cargar los datos del motor.</div></div>
+  <div class="timeline">
+    <div class="ctrl"><button id="play">⏸ Pausa</button><button id="vel">Velocidad ×1</button></div>
+    <div id="meses" style="display:flex;flex:1;gap:4px"></div>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--req)"></i>Requerimiento</span>
+    <span><i style="background:var(--inc)"></i>Incidencia</span>
+    <span>🌴 Vacaciones en el mes</span>
+    <span>🧭 Jefe: 2 h/día de gestión</span>
+    <span>Escritorio punteado rojo = persona por contratar</span>
+    <span>Línea punteada en la barra = 100% de capacidad</span>
+  </div>
+</main>
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("ofi");
+const MARCAS = ["Bembos","Popeyes","Chinawok","Don Belisario","Dunkin","Papa John's"];
+const REQ_TXT = ["Necesito un tablero nuevo para {m}","¿Me sacan las ventas por canal de {m}?","Quiero medir la promo de {m}","Necesito el reporte de mermas de {m}","¿Me arman el P&L por tienda de {m}?"];
+const INC_TXT = ["¡No carga el tablero de {m}!","¡Las ventas de {m} no cuadran!","¡Se cayó la interfaz de {m}!","¡El reporte de {m} salió duplicado!"];
+const fmt = n => Math.round(n).toLocaleString("es-PE");
+const pct = n => Math.round(n*100) + "%";
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+let D, mes = 1, playing = true, speed = 1, visitors = [], queueGroup, layer, ghostLayer, roomLayer, deskInfo = {};
+const MONTH_MS = 26000;
+let elapsed = 0, spawned = 0, plan = [], robotBusy = 0;
+
+function el(tag, attrs = {}, parent = layer){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(x, y, s, attrs = {}, parent){
+  const t = el("text", {x, y, ...attrs}, parent); t.textContent = s; return t;
+}
+function colorUtil(u){ return u > 1 ? "var(--bad)" : u > .85 ? "var(--warn)" : "var(--ok)"; }
+
+// ---------- Escenario fijo ----------
+const ROBOT = {x:150, y:300};
+const DOOR = {x:20, y:300};
+const DESKS = { // posiciones de cada puesto
+  "Jorge Rios":        {x:380, y:120, sq:1},
+  "Jorge Nuñez":       {x:530, y:120, sq:1},
+  "Luis Chavez":       {x:680, y:120, sq:1},
+  "Jean Pierre Prati": {x:380, y:440, sq:2},
+  "Diana Sebastian":   {x:530, y:440, sq:2},
+  "Omar Llontop":      {x:680, y:440, sq:2},
+};
+const GHOSTS = [{x:530,y:240,sq:1},{x:530,y:560,sq:2},{x:680,y:240,sq:1},{x:680,y:560,sq:2},{x:380,y:240,sq:1},{x:380,y:560,sq:2}];
+
+function person(g, x, y, color, opts = {}){
+  const p = el("g", {transform:`translate(${x},${y})`}, g);
+  el("ellipse", {cx:0, cy:16, rx:11, ry:4, fill:"#000", opacity:.10}, p);
+  el("rect", {x:-9, y:-4, width:18, height:20, rx:8, fill:color}, p);
+  el("circle", {cx:0, cy:-12, r:8, fill:"#f2c9a0"}, p);
+  el("path", {d:"M-8,-14 q8,-10 16,0 q-8,-4 -16,0z", fill: opts.hair || "#3b2f2a"}, p);
+  if (opts.badge) txt(12, -14, opts.badge, {"font-size":12}, p);
+  return p;
+}
+
+function buildStatic(){
+  svg.innerHTML = "";
+  const base = el("g", {}, svg);
+  // piso
+  el("rect", {x:10, y:10, width:1260, height:680, rx:16, fill:"var(--floor)", stroke:"var(--line)"}, base);
+  const pat = el("pattern", {id:"tiles", width:40, height:40, patternUnits:"userSpaceOnUse"}, el("defs", {}, base));
+  el("path", {d:"M40 0H0V40", fill:"none", stroke:"#efeae0", "stroke-width":1}, pat);
+  el("rect", {x:10, y:10, width:1260, height:680, rx:16, fill:"url(#tiles)"}, base);
+  // puerta
+  el("rect", {x:6, y:265, width:12, height:70, rx:3, fill:"var(--wood2)"}, base);
+  txt(14, 352, "Entrada", {"font-size":11, fill:"var(--muted)"}, base);
+  // recepción con robot
+  el("rect", {x:70, y:200, width:180, height:200, rx:14, fill:"#fff", stroke:"var(--line)"}, base);
+  txt(155, 222, "Recepción", {"text-anchor":"middle", "font-size":12, "font-weight":700}, base);
+  txt(155, 238, "Dispatcher IA", {"text-anchor":"middle", "font-size":11, fill:"var(--muted)"}, base);
+  el("rect", {x:95, y:330, width:120, height:22, rx:6, fill:"var(--wood)"}, base);
+  const r = el("g", {class:"bob"}, el("g", {transform:`translate(${ROBOT.x},${ROBOT.y})`}, base));
+  el("line", {x1:0, y1:-34, x2:0, y2:-44, stroke:"#555", "stroke-width":2}, r);
+  el("circle", {cx:0, cy:-46, r:4, fill:"#e0453a", class:"pulse"}, r);
+  el("rect", {x:-20, y:-34, width:40, height:30, rx:9, fill:"#dfe6ee", stroke:"#8a97a6"}, r);
+  el("rect", {x:-14, y:-27, width:28, height:14, rx:5, fill:"#1f2430"}, r);
+  el("circle", {cx:-6, cy:-20, r:3, fill:"#6ee7ff"}, r); el("circle", {cx:6, cy:-20, r:3, fill:"#6ee7ff"}, r);
+  el("rect", {x:-14, y:-2, width:28, height:22, rx:6, fill:"#c7d1dc", stroke:"#8a97a6"}, r);
+  // sala de espera
+  el("rect", {x:60, y:430, width:190, height:240, rx:14, fill:"#fff7f5", stroke:"#f0cfc9"}, base);
+  txt(155, 452, "Sala de espera", {"text-anchor":"middle", "font-size":12, "font-weight":700}, base);
+  txt(155, 468, "pedidos sin capacidad", {"text-anchor":"middle", "font-size":11, fill:"var(--muted)"}, base);
+  for (let i=0;i<4;i++) for (let j=0;j<3;j++) el("rect", {x:82+i*42, y:500+j*52, width:26, height:14, rx:4, fill:"#f0e2de"}, base);
+  // zonas squads
+  const zone = (y, h, color, name) => {
+    el("rect", {x:300, y, width:470, height:h, rx:16, fill:color, opacity:.06}, base);
+    el("rect", {x:300, y, width:470, height:h, rx:16, fill:"none", stroke:color, "stroke-opacity":.35, "stroke-dasharray":"2 6"}, base);
+    txt(316, y+22, name, {"font-size":12.5, "font-weight":700, fill:color}, base);
+  };
+  zone(30, 290, "var(--sq1)", "Squad Comercial, Supply y Marcas");
+  zone(350, 330, "var(--sq2)", "Squad Finanzas, GDH y Sistemas");
+  // salas de proyecto (vidrio)
+  const room = (y, h, name, sub) => {
+    el("rect", {x:800, y, width:450, height:h, rx:14, fill:"var(--glass)", stroke:"#9fc1dc", "stroke-width":2}, base);
+    el("line", {x1:800, y1:y+h-40, x2:800, y2:y+h-10, stroke:"var(--floor)", "stroke-width":6}, base);
+    txt(818, y+24, name, {"font-size":13, "font-weight":700}, base);
+    txt(818, y+40, sub, {"font-size":11, fill:"var(--muted)"}, base);
+  };
+  room(30, 290, "Sala de proyectos de TI", "Horas del equipo comprometidas en el mes");
+  room(350, 330, "Sala de proyectos transformacionales", "Horas del equipo comprometidas en el mes");
+  // capas dinámicas
+  roomLayer = el("g", {}, svg);
+  ghostLayer = el("g", {}, svg);
+  const deskLayer = el("g", {}, svg);
+  queueGroup = el("g", {}, svg);
+  layer = el("g", {}, svg);
+  // escritorios
+  for (const [nombre, d] of Object.entries(DESKS)) {
+    const g = el("g", {}, deskLayer);
+    const info = D.personas.find(p => p.persona === nombre) || {rol:"Equipo"};
+    el("rect", {x:d.x-55, y:d.y-38, width:110, height:44, rx:7, fill:"var(--wood)", stroke:"var(--wood2)"}, g);
+    el("rect", {x:d.x-18, y:d.y-34, width:36, height:20, rx:3, fill:"#2b3240"}, g);
+    const screen = el("rect", {x:d.x-15, y:d.y-31, width:30, height:14, rx:2, fill:"#6ee7ff", opacity:.6}, g);
+    const pr = person(g, d.x, d.y+30, d.sq===1 ? "var(--sq1)" : "var(--sq2)", {badge: info.rol==="Jefe" ? "🧭" : ""});
+    txt(d.x, d.y+66, nombre, {"text-anchor":"middle", "font-size":12, "font-weight":600}, g);
+    const sub = txt(d.x, d.y+81, "", {"text-anchor":"middle", "font-size":10.5, fill:"var(--muted)"}, g);
+    const vac = txt(d.x+44, d.y+26, "", {"font-size":16}, g);
+    const pile = el("g", {}, g);
+    deskInfo[nombre] = {g, screen, sub, vac, pile, person:pr, tickets:0, rol:info.rol, sq:d.sq};
+  }
+}
+
+// ---------- Por mes ----------
+function rowMes(m){ return D.resumen.find(r => r.mes === m); }
+
+function renderKpis(r){
+  const k = [
+    ["Mes", r.mes_nombre + " 2027", ""],
+    ["Capacidad neta", fmt(r.horas_netas) + " h", ""],
+    ["Demanda (P90)", fmt(r.demanda_total_plan) + " h", ""],
+    ["Brecha", (r.brecha_horas>=0?"+":"") + fmt(r.brecha_horas) + " h", r.brecha_horas<0?"bad":"ok"],
+    ["Utilización", pct(r.utilizacion), r.utilizacion>1?"bad":r.utilizacion>.85?"warn":"ok"],
+    ["Por contratar", r.personas_adicionales ? "+" + r.personas_adicionales + (r.alertar_en ? " · alerta " + r.alertar_en : "") : "—", r.personas_adicionales?"bad":"ok"],
+  ];
+  document.getElementById("kpis").innerHTML = k.map(([l,v,c]) => `<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+}
+
+function renderRooms(){
+  roomLayer.innerHTML = "";
+  const horasPersona = rowMes(mes).horas_netas / 6;
+  [["Tecnologia", 30], ["Transformacional", 350]].forEach(([tipo, y0]) => {
+    const ps = D.proyectos.filter(p => p.mes === mes && p.tipo === tipo).sort((a,b)=>b.horas-a.horas);
+    const total = ps.reduce((s,p)=>s+p.horas,0);
+    const fte = total / horasPersona;
+    txt(1232, y0+24, fmt(total) + " h", {"text-anchor":"end", "font-size":15, "font-weight":700}, roomLayer);
+    txt(1232, y0+40, "≈ " + fte.toFixed(1) + " personas", {"text-anchor":"end", "font-size":11, fill:"var(--muted)"}, roomLayer);
+    if (!ps.length) { txt(1025, y0+150, "Sin proyectos con data este mes", {"text-anchor":"middle", "font-size":12, fill:"var(--muted)"}, roomLayer); return; }
+    const maxH = Math.max(...D.proyectos.map(p=>p.horas));
+    ps.forEach((p, i) => {
+      const y = y0 + 62 + i*52;
+      el("rect", {x:818, y, width:414, height:42, rx:8, fill:"#fff", stroke:"#cfe0ee"}, roomLayer);
+      txt(830, y+17, p.codigo + " · " + p.proyecto, {"font-size":12, "font-weight":600}, roomLayer);
+      el("rect", {x:830, y:y+25, width:300, height:8, rx:4, fill:"#e7eef5"}, roomLayer);
+      el("rect", {x:830, y:y+25, width:Math.max(4, 300*p.horas/maxH), height:8, rx:4, fill: tipo==="Tecnologia" ? "#2f6fd6" : "#7c4dd6"}, roomLayer);
+      txt(1220, y+33, fmt(p.horas) + " h", {"text-anchor":"end", "font-size":11.5, fill:"var(--muted)"}, roomLayer);
+      // personitas sentadas en la mesa según horas (1 por ~40 h)
+      const n = Math.min(5, Math.max(1, Math.round(p.horas/40)));
+      for (let k=0;k<n;k++) el("circle", {cx:1150 + k*0 - n*6 + k*12, cy:y+12, r:4.5, fill: tipo==="Tecnologia" ? "#2f6fd6" : "#7c4dd6", opacity:.75}, roomLayer);
+    });
+  });
+}
+
+function renderDesks(){
+  const r = rowMes(mes);
+  for (const [nombre, d] of Object.entries(deskInfo)) {
+    const p = D.personas.find(x => x.persona === nombre);
+    const m = p ? p.meses.find(x => x.mes === mes) : null;
+    const vacD = m ? Math.round(m.horas_vacaciones / 8) : 0;
+    d.vac.textContent = vacD ? "🌴" : "";
+    d.sub.textContent = (vacD ? vacD + " días de vacaciones · " : "") + (m ? fmt(m.horas_netas) + " h netas" : "");
+    d.screen.setAttribute("fill", colorUtil(r.utilizacion));
+    d.tickets = 0; d.pile.innerHTML = "";
+  }
+}
+
+function renderGhosts(){
+  ghostLayer.innerHTML = "";
+  const r = rowMes(mes);
+  for (let i=0; i<r.personas_adicionales && i<GHOSTS.length; i++){
+    const g = GHOSTS[i];
+    const gg = el("g", {class:"pulse"}, ghostLayer);
+    el("rect", {x:g.x-55, y:g.y-24, width:110, height:44, rx:7, fill:"#fff", stroke:"var(--bad)", "stroke-width":2, "stroke-dasharray":"6 4"}, gg);
+    txt(g.x, g.y+2, "+1 por contratar", {"text-anchor":"middle", "font-size":12, "font-weight":700, fill:"var(--bad)"}, gg);
+    if (r.alertar_en) txt(g.x, g.y+16, "alertar en " + r.alertar_en, {"text-anchor":"middle", "font-size":10.5, fill:"var(--bad)"}, gg);
+  }
+}
+
+function renderQueue(){
+  queueGroup.innerHTML = "";
+  const r = rowMes(mes);
+  if (r.brecha_horas >= 0) {
+    txt(155, 640, "Sin cola este mes ✓", {"text-anchor":"middle", "font-size":12, fill:"var(--ok)", "font-weight":600}, queueGroup);
+    return;
+  }
+  const horasPorPedido = r.horas_req_inc_p90 / Math.max(1, r.req_esperados + r.inc_esperadas);
+  const n = Math.min(12, Math.round(-r.brecha_horas / horasPorPedido));
+  for (let k=0;k<n;k++){
+    const i = k % 4, j = Math.floor(k/4);
+    person(queueGroup, 95+i*42, 492+j*52, k%3===0 ? "var(--inc)" : "var(--req)", {hair:"#5a4636"});
+  }
+  txt(155, 662, fmt(-r.brecha_horas) + " h sin capacidad", {"text-anchor":"middle", "font-size":12.5, "font-weight":700, fill:"var(--bad)"}, queueGroup);
+}
+
+function buildTimeline(){
+  const c = document.getElementById("meses");
+  c.innerHTML = D.resumen.map(r => {
+    const u = Math.min(1.5, r.utilizacion);
+    return `<button class="mes" data-m="${r.mes}" title="${r.mes_nombre}: ${pct(r.utilizacion)}">
+      <div class="bar"><i style="height:${u/1.5*100}%;background:${colorUtil(r.utilizacion)}"></i><b style="bottom:${100/1.5}%"></b></div>
+      <span>${r.mes_nombre}</span><small>${pct(r.utilizacion)}</small></button>`;
+  }).join("");
+  c.querySelectorAll(".mes").forEach(b => b.onclick = () => { setMes(+b.dataset.m); });
+}
+
+function setMes(m){
+  mes = m;
+  document.querySelectorAll(".mes").forEach(b => b.classList.toggle("sel", +b.dataset.m === m));
+  const r = rowMes(m);
+  renderKpis(r); renderRooms(); renderDesks(); renderGhosts(); renderQueue();
+  visitors.forEach(v => v.g.remove()); visitors = [];
+  // plan de llegadas del mes: requerimientos e incidencias esperados
+  const nr = Math.round(r.req_esperados), ni = Math.round(r.inc_esperadas);
+  plan = [...Array(nr).fill("req"), ...Array(ni).fill("inc")].sort(() => Math.random() - .5);
+  spawned = 0; elapsed = 0;
+}
+
+// ---------- Visitantes ----------
+function spawn(tipo){
+  const marca = rnd(MARCAS);
+  const sq = Math.random() < .55 ? 1 : 2;
+  const jefe = Object.entries(DESKS).find(([n,d]) => d.sq===sq && deskInfo[n].rol==="Jefe")[0];
+  const miembros = Object.entries(DESKS).filter(([n,d]) => d.sq===sq).map(([n])=>n);
+  const asignado = Math.random() < .15 ? jefe : rnd(miembros.filter(n => n !== jefe));
+  const color = tipo === "inc" ? "var(--inc)" : "var(--req)";
+  const g = el("g", {}, layer);
+  const body = person(g, 0, 0, color, {hair:"#5a4636"});
+  const bubble = el("g", {opacity:0}, g);
+  const inner = el("g", {}, bubble);
+  const msg = (tipo === "inc" ? rnd(INC_TXT) : rnd(REQ_TXT)).replace("{m}", marca);
+  const w = Math.max(120, msg.length * 6.3);
+  // la burbuja se corre a la derecha para no salirse del piso
+  const shift = Math.max(0, w/2 - ROBOT.x + 24);
+  el("rect", {x:-w/2 + shift, y:-58, width:w, height:26, rx:9, fill:"#fff", stroke: tipo==="inc" ? "#f0b4ae" : "#b9cff0"}, inner);
+  el("path", {d:"M-5,-33 L0,-26 L5,-33z", fill:"#fff"}, inner);
+  txt(shift, -41, msg, {"text-anchor":"middle", "font-size":11.5}, inner);
+  const jd = DESKS[jefe], ad = DESKS[asignado];
+  const v = {g, bubble, tipo, asignado, x:DOOR.x, y:DOOR.y, t:0,
+    path:[
+      {x:ROBOT.x, y:ROBOT.y+78, wait:1500, say:true},
+      {x:jd.x+40, y:jd.y+30, wait:900, say:false, note:"jefe"},
+      {x:ad.x-38, y:ad.y+32, wait:900, say:false, drop:true},
+      {x:DOOR.x-20, y:DOOR.y+10, wait:0}
+    ], i:0, waitUntil:0};
+  g.setAttribute("transform", `translate(${v.x},${v.y})`);
+  visitors.push(v);
+}
+
+function dropTicket(nombre, tipo){
+  const d = deskInfo[nombre], k = d.tickets++;
+  if (k >= 8) return;
+  const p = DESKS[nombre];
+  el("rect", {x:p.x+30, y:p.y-30 - k*4, width:16, height:10, rx:2, fill: tipo==="inc" ? "#f6c6c1" : "#c9dbf6", stroke: tipo==="inc" ? "#e0453a" : "#2f6fd6", "stroke-width":.8}, d.pile);
+}
+
+let last = performance.now();
+function tick(now){
+  const raw = now - last, dt = Math.min(50, raw) * speed; last = now;
+  if (playing && D) {
+    elapsed += Math.min(100, raw) * speed;
+    // llegadas repartidas en el mes
+    while (spawned < plan.length && elapsed > (spawned + .5) / plan.length * MONTH_MS * .8) spawn(plan[spawned++]);
+    if (elapsed > MONTH_MS && visitors.length === 0) setMes(mes % 12 + 1);
+  }
+  for (const v of visitors) {
+    if (!playing) break;
+    if (v.showAt && now >= v.showAt && v.waitUntil > now) { v.bubble.setAttribute("opacity", 1); }
+    if (v.waitUntil > now) continue;
+    if (v.showAt) { v.bubble.setAttribute("opacity", 0); v.showAt = 0; }
+    const tgt = v.path[v.i]; if (!tgt) { v.done = true; continue; }
+    const dx = tgt.x - v.x, dy = tgt.y - v.y, dist = Math.hypot(dx, dy), step = .16 * dt;
+    if (dist <= step) {
+      v.x = tgt.x; v.y = tgt.y;
+      if (tgt.say) {
+        // el robot atiende de a uno: si está ocupado, la persona espera su turno
+        const inicio = Math.max(now, robotBusy);
+        robotBusy = inicio + tgt.wait / speed;
+        v.showAt = inicio; v.waitUntil = robotBusy;
+      } else {
+        v.bubble.setAttribute("opacity", 0);
+        v.waitUntil = now + tgt.wait / speed;
+      }
+      if (tgt.drop) dropTicket(v.asignado, v.tipo);
+      v.i++;
+    } else { v.x += dx / dist * step; v.y += dy / dist * step; if (v.i>0) v.bubble.setAttribute("opacity", 0); }
+    v.g.setAttribute("transform", `translate(${v.x.toFixed(1)},${v.y.toFixed(1)})`);
+  }
+  visitors = visitors.filter(v => { if (v.done) { v.g.remove(); return false; } return true; });
+  requestAnimationFrame(tick);
+}
+
+document.getElementById("play").onclick = e => { playing = !playing; e.target.textContent = playing ? "⏸ Pausa" : "▶ Play"; };
+document.getElementById("vel").onclick = e => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; e.target.textContent = "Velocidad ×" + speed; };
+
+fetch("/api/oficina").then(r => r.json()).then(d => {
+  D = d; buildStatic(); buildTimeline(); setMes(1); requestAnimationFrame(tick);
+}).catch(() => { document.getElementById("err").style.display = "block"; svg.style.display = "none"; });
+</script>
+</body>
+</html>

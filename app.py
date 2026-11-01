@@ -1,8 +1,19 @@
 """API y vista simple de resultados del motor (etapa 1: solo números)."""
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from functools import lru_cache
+from pathlib import Path
 
-from motor.modelo import ejecutar
+from fastapi import FastAPI
+from fastapi.responses import FileResponse, HTMLResponse
+
+from motor.modelo import ejecutar as _ejecutar
+
+STATIC = Path(__file__).resolve().parent / "static"
+
+
+@lru_cache(maxsize=1)
+def ejecutar():
+    # Los insumos son archivos del repo: se calcula una vez por despliegue.
+    return _ejecutar()
 
 app = FastAPI(title="Demanda TI NGR — motor estadístico")
 
@@ -55,5 +66,29 @@ td:first-child{{text-align:left}}.neg{{color:#c00;font-weight:bold}}</style></he
 <h2>Equipo de data NGR — demanda vs. capacidad 2027</h2>
 <p>Datos ficticios. Proyección con Holt-Winters + filtro de Kalman, Monte Carlo Poisson (P90, peor escenario de horas) y Erlang C.</p>
 <table><tr>{head}</tr>{''.join(rows)}</table>
+<p><a href="/oficina"><b>Ver la oficina animada →</b></a></p>
 <p>JSON: <a href="/api/resumen">/api/resumen</a> · <a href="/api/pronostico">/api/pronostico</a> · <a href="/api/capacidad">/api/capacidad</a></p>
 </body></html>"""
+
+
+@app.get("/api/oficina")
+def oficina():
+    o = ejecutar()
+    eq = o["capacidad_persona"].round(1)
+    personas = []
+    for nombre, g in eq.groupby("persona", sort=False):
+        f = g.iloc[0]
+        personas.append({"persona": nombre, "squad": f["squad"], "rol": f["rol"],
+                         "meses": g[["mes", "horas_netas", "horas_vacaciones", "horas_gestion"]].to_dict(orient="records")})
+    pr = o["proyectos"]
+    pr = pr[pr["horas"] > 0].round(1)
+    return {
+        "resumen": o["resumen"].round(2).to_dict(orient="records"),
+        "personas": personas,
+        "proyectos": pr.to_dict(orient="records"),
+    }
+
+
+@app.get("/oficina")
+def vista_oficina():
+    return FileResponse(STATIC / "oficina.html")
