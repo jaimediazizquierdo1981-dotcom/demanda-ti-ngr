@@ -84,13 +84,16 @@ def carga_proyectos(ins: dict) -> pd.DataFrame:
     p, eq = ins["param"], ins["equipo"]
     du = dias_utiles(p["anio_plan"], ins["feriados"])
     horas_equipo_dia = eq["horas_semana"].sum() / 5
+    horas_persona_dia = eq["horas_semana"].mean() / 5
     filas = []
     for _, pr in ins["proyectos"].iterrows():
         dias = du[(du >= pr["inicio"]) & (du <= pr["fin"])]
+        # base "equipo": % de las 6 personas; base "persona": % de un solo recurso
+        hdia = horas_persona_dia if str(pr.get("base", "equipo")) == "persona" else horas_equipo_dia
         for m in range(1, 13):
             n = (dias.month == m).sum()
             filas.append({"mes": m, "codigo": pr["codigo"], "proyecto": pr["proyecto"],
-                          "tipo": pr["tipo"], "horas": n * horas_equipo_dia * pr["participacion"]})
+                          "tipo": pr["tipo"], "horas": n * hdia * pr["participacion"]})
     return pd.DataFrame(filas)
 
 
