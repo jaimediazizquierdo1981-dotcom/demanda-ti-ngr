@@ -35,6 +35,8 @@
   .tabla .neg{color:var(--bad);font-weight:700} .tabla .pos{color:var(--ok);font-weight:600}
   .tabla .na{color:#b9b3a6} .tabla .cur{background:#f6f4ef}
   .tabla div.last{border-bottom:none}
+  .tabla div.tit{grid-column:1/-1;text-align:left;padding:8px 14px 6px;font-size:14px;font-weight:700;border-bottom:2px solid var(--line)}
+  .tabla div.tit small{font-weight:400;color:var(--muted);font-size:11.5px;margin-left:8px}
   button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
   button:hover{border-color:#aaa}
   .mes{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px 4px;border-radius:8px;border:1px solid transparent;background:transparent}
@@ -73,7 +75,8 @@
     <div class="ctrl"><button id="play">⏸ Pausa</button><button id="vel">Velocidad ×1</button><button id="reiniciar" title="Volver a enero sin pendientes">↺ Enero</button></div>
     <div id="meses"></div>
   </div>
-  <div class="tabla" id="tabla"></div>
+  <div class="tabla" id="tablaP"></div>
+  <div class="tabla" id="tablaR"></div>
   <div class="legend">
     <span><i style="background:var(--req)"></i>Requerimiento</span>
     <span><i style="background:var(--inc)"></i>Incidencia</span>
@@ -290,7 +293,7 @@ function rowMes(m){ return D.resumen.find(r => r.mes === m); }
 function renderKpis(r){
   const k = [
     ["Mes", r.mes_nombre + " 2027", ""],
-    ["Libres para req. e inc.", fmt(r.horas_netas - r.horas_proyectos) + " h", (r.horas_netas - r.horas_proyectos) < 0 ? "bad" : ""],
+    ["Libres para req. e inc.", fmt(CASCADA[r.mes].libres) + " h", CASCADA[r.mes].libres <= 0 ? "bad" : ""],
     ["Demanda (plan)", fmt(r.demanda_total_plan) + " h", ""],
     ["Brecha", (r.brecha_horas>=0?"+":"") + fmt(r.brecha_horas) + " h", r.brecha_horas<0?"bad":"ok"],
     ["Utilización", pct(r.utilizacion), r.utilizacion>1?"bad":r.utilizacion>.85?"warn":"ok"],
@@ -325,7 +328,7 @@ function renderRooms(){
 
 // Horas disponibles de cada persona = horas netas − su parte de los proyectos del mes
 function iniciarDisponibles(){
-  const proyMes = D.proyectos.filter(p => p.mes === mes).reduce((s,p)=>s+p.horas,0);
+  const proyMes = D.proyectos.filter(p => p.mes === mes).reduce((s,p)=>s+p.horas,0) + (CASCADA[mes]?.pendIn || 0);
   const netas = {};
   for (const nombre of Object.keys(deskInfo)) {
     const p = D.personas.find(x => x.persona === nombre);
@@ -410,16 +413,23 @@ function buildTimeline(){
   c.querySelectorAll(".mes").forEach(b => b.onclick = () => irAMes(+b.dataset.m));
 }
 
-function excesoProyectos(m){
-  const r = rowMes(m);
-  return Math.max(0, r.horas_proyectos - r.horas_netas);
+// Proyectos: tienen prioridad. Si no entran en las horas del equipo, el saldo pasa al mes siguiente.
+let CASCADA = [];
+function calcularCascada(){
+  CASCADA = []; let pend = 0;
+  for (const r of D.resumen) {
+    const saldo = r.horas_netas - r.horas_proyectos - pend;
+    CASCADA[r.mes] = {pendIn: pend, saldo, pendOut: Math.max(0, -saldo), libres: Math.max(0, saldo)};
+    pend = Math.max(0, -saldo);
+  }
 }
+function excesoProyectos(m){ return 0; }   // el exceso de proyectos se lleva en su propio cuadro
 function setMes(m, continuar = false){
   // al cerrar el mes, lo que quedó en la sala de espera (y el exceso de proyectos) es el pendiente
   const exceso = excesoProyectos(mes);
   if (sim[mes] && !sim[mes].cerrado) sim[mes].pendiente = espera.reduce((t,v)=>t+v.horas,0) + exceso, sim[mes].cerrado = true;
   const arrastre = continuar ? espera.slice() : null;
-  if (arrastre && exceso > 0.5 && !arrastre.some(v => v.proyecto)) arrastre.push({tipo:"req", horas: exceso, look: lookAleatorio(), sq: 1, proyecto: true});
+
   mes = m;
   document.querySelectorAll(".mes").forEach(b => b.classList.toggle("sel", +b.dataset.m === m));
   const r = rowMes(m);
@@ -427,7 +437,7 @@ function setMes(m, continuar = false){
   visitors.forEach(v => v.g.remove()); visitors = [];
   espera = []; rechazados = []; renderEspera(); renderRechazados();
   const proyMes = D.proyectos.filter(p => p.mes === m).reduce((t,p)=>t+p.horas,0);
-  sim[m] = {reales: proyMes, atendidas: proyMes, pendiente: 0, cerrado: false};
+  sim[m] = {reales: 0, atendidas: 0, pendiente: 0, cerrado: false};
   // pendientes del mes anterior: vuelven a pedir atención primero
   if (arrastre && arrastre.length) arrastre.forEach((v, k) => reingresar(v.tipo, v.horas, v.look, v.sq, k));
   else if (!continuar && r.arrastre_entrante > 1) {
@@ -465,7 +475,7 @@ function reingresar(tipo, horas, look, sq, k){
 
 // ---------- Simulación rápida (sin animación) de los meses anteriores ----------
 function disponiblesMes(m){
-  const proyMes = D.proyectos.filter(p => p.mes === m).reduce((t,p)=>t+p.horas,0);
+  const proyMes = D.proyectos.filter(p => p.mes === m).reduce((t,p)=>t+p.horas,0) + (CASCADA[m]?.pendIn || 0);
   const netas = {};
   for (const nombre of Object.keys(DESKS)) {
     const p = D.personas.find(x => x.persona === nombre);
@@ -491,7 +501,7 @@ function asignarRapido(disp, sq, horas){  // misma regla que el jefe en la anima
 function simularMesRapido(m, arrastre){
   const r = rowMes(m);
   const {disp, proyMes} = disponiblesMes(m);
-  const res = {reales: proyMes, atendidas: proyMes, pendiente: 0, cerrado: true};
+  const res = {reales: 0, atendidas: 0, pendiente: 0, cerrado: true};
   const pendientes = [];
   const atender = (v) => {
     const falta = asignarRapido(disp, v.sq, v.horas);
@@ -507,8 +517,6 @@ function simularMesRapido(m, arrastre){
     res.reales += v.horas;
     atender(v);
   });
-  const exceso = excesoProyectos(m);   // horas de proyectos que no entraron en la capacidad
-  if (exceso > 0.5) pendientes.push({tipo:"req", horas: exceso, look: lookAleatorio(), sq: 1, proyecto: true});
   res.pendiente = pendientes.reduce((t,v)=>t+v.horas,0);
   return {res, pendientes};
 }
@@ -527,32 +535,58 @@ function celdas(fn){ return D.resumen.map(r => fn(r)).join(""); }
 function renderTabla(){
   const cur = r => r.mes === mes ? " cur" : "";
   const val = (v, cls = "") => `<div class="${cls}">${v}</div>`;
-  const pendAnterior = m => m > 1 && sim[m-1] ? sim[m-1].pendiente : 0;
-  const proyM = r => r.horas_proyectos;
-  const libres = r => r.horas_netas - r.horas_proyectos;
-  const pedidosReales = r => sim[r.mes] ? sim[r.mes].reales - proyM(r) : null;
+  const h3 = D.horas_mes_tercero || 160;
+  const na = r => val("—", "na" + cur(r));
+  const signo = v => (v>0?"+":"") + fmt(v);
+  const pendAnteriorR = m => m > 1 && sim[m-1] ? sim[m-1].pendiente : 0;
   const enCurso = r => sim[r.mes] && !sim[r.mes].cerrado && r.mes === mes;
-  const filas = [
-    ['Demanda proyectada<small>modelo: proyectos + req. + inc.</small>', r => val(fmt(r.demanda_total_plan), cur(r))],
-    ['Demanda real<small>simulación: proyectos + pedidos que llegaron</small>', r => sim[r.mes] ? val(fmt(sim[r.mes].reales), cur(r)) : val("—", "na" + cur(r))],
-    ['Desvío de la demanda<small>real − proyectada (+ = llegó más de lo previsto)</small>', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const d = sim[r.mes].reales - r.demanda_total_plan; return val((d>0?"+":"") + fmt(d), (d>0?"neg":"pos") + cur(r)); }],
-    ['Horas del equipo<small>ya sin vacaciones, descansos ni gestión de jefes</small>', r => val(fmt(r.horas_netas), cur(r))],
-    ['− Proyectos (TI + transformacionales)', r => val(fmt(proyM(r)), cur(r))],
-    ['= Libres para req. e incidencias', r => { const l = libres(r); return val(fmt(l), (l<0?"neg":"") + cur(r)); }],
-    ['Req. e incidencias proyectados<small>modelo</small>', r => val(fmt(r.horas_req_inc_plan), cur(r))],
-    ['Req. e incidencias reales<small>simulación' + ' · en curso = hasta hoy</small>', r => pedidosReales(r) === null ? val("—", "na" + cur(r)) : val(fmt(pedidosReales(r)), cur(r))],
-    ['Pendiente que viene del mes anterior', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const p = pendAnterior(r.mes); return val(p ? fmt(p) : "–", cur(r)); }],
-    ['Saldo del mes<small>libres − req. e inc. reales − pendiente anterior</small>', r => {
-        if (!sim[r.mes] || enCurso(r)) return val("—", "na" + cur(r));
-        const sdo = libres(r) - pedidosReales(r) - pendAnterior(r.mes);
-        return val((sdo>0?"+":"") + fmt(sdo), (sdo<0?"neg":"pos") + cur(r)); }],
-    ['Pendiente que pasa al mes siguiente<small>simulación · gris = modelo</small>', r => {
-        if (sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)) { const p = sim[r.mes].cerrado ? sim[r.mes].pendiente : espera.reduce((t,v)=>t+v.horas,0) + excesoProyectos(r.mes); return val(p >= .5 ? fmt(p) : "–", (p >= .5 ? "neg" : "") + cur(r)); }
-        return val(r.pendiente_cierre ? fmt(r.pendiente_cierre) : "–", "na" + cur(r)); }],
-    ['Terceros necesarios<small>cubren el exceso sobre la capacidad del equipo</small>', r => val(r.terceros ? "+" + r.terceros : "–", (r.terceros ? "neg" : "") + cur(r))],
-  ];
-  document.getElementById("tabla").innerHTML = filas.map(([lbl, fn], i) =>
-    `<div class="lbl${i===filas.length-1?" last":""}">${lbl}</div>` + D.resumen.map(r => fn(r).replace('class="', i===filas.length-1 ? 'class="last ' : 'class="')).join("")).join("");
+
+  // Mismas filas para los dos cuadros
+  const cuadro = (id, titulo, sub, d) => {
+    const filas = [
+      ['Horas disponibles<small>' + d.dispNota + '</small>', r => val(fmt(d.disp(r)), (d.disp(r) <= 0 ? "neg" : "") + cur(r))],
+      ['Demanda proyectada<small>modelo</small>', r => val(fmt(d.proy(r)), cur(r))],
+      ['Demanda real<small>' + d.realNota + '</small>', r => d.real(r) === null ? na(r) : val(fmt(d.real(r)), cur(r))],
+      ['Desvío de la demanda<small>real − proyectada (+ = llegó más de lo previsto)</small>', r => { const x = d.real(r); if (x === null) return na(r); const dv = x - d.proy(r); return val(Math.abs(dv) < .5 ? "–" : signo(dv), (dv > .5 ? "neg" : dv < -.5 ? "pos" : "") + cur(r)); }],
+      ['Pendiente que viene del mes anterior', r => { const p = d.pendIn(r); if (p === null) return na(r); return val(p >= .5 ? fmt(p) : "–", cur(r)); }],
+      ['Saldo del mes<small>disponibles − demanda real − pendiente anterior</small>', r => { const x = d.saldo(r); if (x === null) return na(r); return val(signo(x), (x < -.5 ? "neg" : "pos") + cur(r)); }],
+      ['Pendiente que pasa al mes siguiente<small>' + d.pendNota + '</small>', r => { const p = d.pendOut(r); if (p === null) return na(r); const gris = d.pendGris && d.pendGris(r); return val(p >= .5 ? fmt(p) : "–", (gris ? "na" : (p >= .5 ? "neg" : "")) + cur(r)); }],
+      ['Terceros necesarios<small>exceso del mes ÷ ' + fmt(h3) + ' h por tercero</small>', r => { const t = d.terceros(r); return val(t ? "+" + t : "–", (t ? "neg" : "") + cur(r)); }],
+    ];
+    document.getElementById(id).innerHTML = `<div class="tit">${titulo}<small>${sub}</small></div>` +
+      filas.map(([lbl, fn], i) => `<div class="lbl${i===filas.length-1?" last":""}">${lbl}</div>` +
+        D.resumen.map(r => fn(r).replace('class="', i===filas.length-1 ? 'class="last ' : 'class="')).join("")).join("");
+  };
+
+  cuadro("tablaP", "Proyectos", "TI + transformacionales · tienen prioridad sobre los pedidos", {
+    dispNota: "horas del equipo (ya sin vacaciones, descansos ni gestión)",
+    disp: r => r.horas_netas,
+    proy: r => r.horas_proyectos,
+    realNota: "los proyectos se ejecutan según su plan",
+    real: r => r.horas_proyectos,
+    pendIn: r => CASCADA[r.mes].pendIn,
+    saldo: r => CASCADA[r.mes].saldo,
+    pendNota: "modelo",
+    pendOut: r => CASCADA[r.mes].pendOut,
+    terceros: r => Math.ceil(Math.max(0, r.horas_proyectos - r.horas_netas) / h3 - 1e-9),
+  });
+
+  cuadro("tablaR", "Requerimientos e incidencias", "usan las horas que dejan libres los proyectos", {
+    dispNota: "lo que dejan libre los proyectos",
+    disp: r => CASCADA[r.mes].libres,
+    proy: r => r.horas_req_inc_plan,
+    realNota: "simulación · en curso = hasta hoy",
+    real: r => sim[r.mes] ? sim[r.mes].reales : null,
+    pendIn: r => sim[r.mes] ? pendAnteriorR(r.mes) : null,
+    saldo: r => (!sim[r.mes] || enCurso(r)) ? null : CASCADA[r.mes].libres - sim[r.mes].reales - pendAnteriorR(r.mes),
+    pendNota: "simulación · gris = estimado del modelo",
+    pendOut: r => {
+      if (sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)) return sim[r.mes].cerrado ? sim[r.mes].pendiente : espera.reduce((t,v)=>t+v.horas,0);
+      return Math.max(0, r.pendiente_cierre - CASCADA[r.mes].pendOut);
+    },
+    pendGris: r => !(sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)),
+    terceros: r => Math.ceil(Math.max(0, r.horas_req_inc_plan - CASCADA[r.mes].libres) / h3 - 1e-9),
+  });
 }
 
 // ---------- Visitantes ----------
@@ -727,7 +761,7 @@ document.getElementById("reiniciar").onclick = () => { sim = {}; espera = []; se
 document.getElementById("vel").onclick = e => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; e.target.textContent = "Velocidad ×" + speed; };
 
 calcular().then(d => {
-  D = d; asignarPuestos(); buildStatic(); buildTimeline(); setMes(1); requestAnimationFrame(tick);
+  D = d; calcularCascada(); asignarPuestos(); buildStatic(); buildTimeline(); setMes(1); requestAnimationFrame(tick);
 }).catch(() => { document.getElementById("err").style.display = "block"; svg.style.display = "none"; });
 </script>
 </body>

@@ -30,6 +30,7 @@ def _salida(o: dict) -> dict:
         "mezcla": mezcla,
         "horas_pedido": horas,
         "dispatcher": c.get("dispatcher", {"tasa_rechazo": 0, "motivos": {}}),
+        "horas_mes_tercero": float(c["capacidad"].get("horas_mes_tercero", 160)),
         "resumen": o["resumen"].round(2).to_dict(orient="records"),
         "personas": personas,
         "proyectos": pr.to_dict(orient="records"),
