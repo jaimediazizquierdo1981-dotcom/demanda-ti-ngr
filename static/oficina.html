@@ -290,7 +290,7 @@ function rowMes(m){ return D.resumen.find(r => r.mes === m); }
 function renderKpis(r){
   const k = [
     ["Mes", r.mes_nombre + " 2027", ""],
-    ["Horas para atender", fmt(r.horas_netas) + " h", ""],
+    ["Libres para req. e inc.", fmt(r.horas_netas - r.horas_proyectos) + " h", (r.horas_netas - r.horas_proyectos) < 0 ? "bad" : ""],
     ["Demanda (plan)", fmt(r.demanda_total_plan) + " h", ""],
     ["Brecha", (r.brecha_horas>=0?"+":"") + fmt(r.brecha_horas) + " h", r.brecha_horas<0?"bad":"ok"],
     ["Utilización", pct(r.utilizacion), r.utilizacion>1?"bad":r.utilizacion>.85?"warn":"ok"],
@@ -410,10 +410,16 @@ function buildTimeline(){
   c.querySelectorAll(".mes").forEach(b => b.onclick = () => irAMes(+b.dataset.m));
 }
 
+function excesoProyectos(m){
+  const r = rowMes(m);
+  return Math.max(0, r.horas_proyectos - r.horas_netas);
+}
 function setMes(m, continuar = false){
-  // al cerrar el mes, lo que quedó en la sala de espera es el pendiente
-  if (sim[mes]) sim[mes].pendiente = espera.reduce((t,v)=>t+v.horas,0), sim[mes].cerrado = true;
+  // al cerrar el mes, lo que quedó en la sala de espera (y el exceso de proyectos) es el pendiente
+  const exceso = excesoProyectos(mes);
+  if (sim[mes] && !sim[mes].cerrado) sim[mes].pendiente = espera.reduce((t,v)=>t+v.horas,0) + exceso, sim[mes].cerrado = true;
   const arrastre = continuar ? espera.slice() : null;
+  if (arrastre && exceso > 0.5 && !arrastre.some(v => v.proyecto)) arrastre.push({tipo:"req", horas: exceso, look: lookAleatorio(), sq: 1, proyecto: true});
   mes = m;
   document.querySelectorAll(".mes").forEach(b => b.classList.toggle("sel", +b.dataset.m === m));
   const r = rowMes(m);
@@ -501,6 +507,8 @@ function simularMesRapido(m, arrastre){
     res.reales += v.horas;
     atender(v);
   });
+  const exceso = excesoProyectos(m);   // horas de proyectos que no entraron en la capacidad
+  if (exceso > 0.5) pendientes.push({tipo:"req", horas: exceso, look: lookAleatorio(), sq: 1, proyecto: true});
   res.pendiente = pendientes.reduce((t,v)=>t+v.horas,0);
   return {res, pendientes};
 }
@@ -511,7 +519,7 @@ function irAMes(m){
   for (let k = 1; k < m; k++) { const o = simularMesRapido(k, arrastre); sim[k] = o.res; arrastre = o.pendientes; }
   espera = arrastre.map(v => ({...v}));
   if (m === 1) { espera = []; setMes(1); return; }
-  mes = m - 1;           // el mes anterior queda cerrado con su pendiente
+  mes = m - 1;           // el mes anterior queda cerrado con su pendiente (incluye exceso de proyectos)
   setMes(m, true);
 }
 
@@ -520,18 +528,23 @@ function renderTabla(){
   const cur = r => r.mes === mes ? " cur" : "";
   const val = (v, cls = "") => `<div class="${cls}">${v}</div>`;
   const pendAnterior = m => m > 1 && sim[m-1] ? sim[m-1].pendiente : 0;
+  const proyM = r => r.horas_proyectos;
+  const libres = r => r.horas_netas - r.horas_proyectos;
+  const pedidosReales = r => sim[r.mes] ? sim[r.mes].reales - proyM(r) : null;
+  const enCurso = r => sim[r.mes] && !sim[r.mes].cerrado && r.mes === mes;
   const filas = [
-    ['Demanda proyectada<small>modelo</small>', r => val(fmt(r.demanda_total_plan), cur(r))],
-    ['Demanda real<small>simulación: proyectos + pedidos que llegaron</small>', r => sim[r.mes] ? val(fmt(sim[r.mes].reales), cur(r)) : val("—", "na" + cur(r))],
-    ['Desvío de la demanda<small>real − proyectada (+ = llegó más de lo previsto)</small>', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const d = sim[r.mes].reales - r.demanda_total_plan; return val((d>0?"+":"") + fmt(d), (d>0?"neg":"pos") + cur(r)); }],
-    ['Horas para atender<small>ya sin vacaciones, descansos ni gestión de jefes</small>', r => val(fmt(r.horas_netas), cur(r))],
+    ['Horas del equipo<small>ya sin vacaciones, descansos ni gestión de jefes</small>', r => val(fmt(r.horas_netas), cur(r))],
+    ['− Proyectos (TI + transformacionales)', r => val(fmt(proyM(r)), cur(r))],
+    ['= Libres para req. e incidencias', r => { const l = libres(r); return val(fmt(l), (l<0?"neg":"") + cur(r)); }],
+    ['Req. e incidencias proyectados<small>modelo</small>', r => val(fmt(r.horas_req_inc_plan), cur(r))],
+    ['Req. e incidencias reales<small>simulación' + ' · en curso = hasta hoy</small>', r => pedidosReales(r) === null ? val("—", "na" + cur(r)) : val(fmt(pedidosReales(r)), cur(r))],
     ['Pendiente que viene del mes anterior', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const p = pendAnterior(r.mes); return val(p ? fmt(p) : "–", cur(r)); }],
-    ['Saldo del mes<small>horas para atender − demanda real − pendiente anterior</small>', r => {
-        if (!sim[r.mes] || (!sim[r.mes].cerrado && r.mes === mes)) return val("—", "na" + cur(r));
-        const sdo = r.horas_netas - sim[r.mes].reales - pendAnterior(r.mes);
+    ['Saldo del mes<small>libres − req. e inc. reales − pendiente anterior</small>', r => {
+        if (!sim[r.mes] || enCurso(r)) return val("—", "na" + cur(r));
+        const sdo = libres(r) - pedidosReales(r) - pendAnterior(r.mes);
         return val((sdo>0?"+":"") + fmt(sdo), (sdo<0?"neg":"pos") + cur(r)); }],
     ['Pendiente que pasa al mes siguiente<small>simulación · gris = modelo</small>', r => {
-        if (sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)) { const p = sim[r.mes].cerrado ? sim[r.mes].pendiente : espera.reduce((t,v)=>t+v.horas,0); return val(p ? fmt(p) : "–", (p ? "neg" : "") + cur(r)); }
+        if (sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)) { const p = sim[r.mes].cerrado ? sim[r.mes].pendiente : espera.reduce((t,v)=>t+v.horas,0) + excesoProyectos(r.mes); return val(p >= .5 ? fmt(p) : "–", (p >= .5 ? "neg" : "") + cur(r)); }
         return val(r.pendiente_cierre ? fmt(r.pendiente_cierre) : "–", "na" + cur(r)); }],
     ['Terceros necesarios<small>cubren el exceso sobre la capacidad del equipo</small>', r => val(r.terceros ? "+" + r.terceros : "–", (r.terceros ? "neg" : "") + cur(r))],
   ];
