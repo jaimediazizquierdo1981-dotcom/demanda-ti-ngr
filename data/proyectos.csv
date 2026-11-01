@@ -1,7 +1,7 @@
 codigo,proyecto,tipo,inicio,fin,participacion,base
 TI1,ONE - Gestión de tienda,Tecnologia,2027-04-05,2027-08-20,0.15,equipo
 TI2,Data Governance,Tecnologia,2027-01-04,2027-05-21,0.2,equipo
-TI3,Fábrica de IA,Tecnologia,2027-01-04,2027-05-21,0.1,equipo
+TI3,Fábrica de IA,Tecnologia,2027-01-04,2027-05-21,0.15,jefes
 TI4,Asistente IA para Reporting,Tecnologia,2027-04-05,2027-08-20,0.15,equipo
 T1,Pricing y gestión de menú por marca,Transformacional,2027-01-01,2027-06-30,0.15,equipo
 T2,Rediseño de procesos core de back office,Transformacional,2027-01-01,2027-08-31,0.0,equipo

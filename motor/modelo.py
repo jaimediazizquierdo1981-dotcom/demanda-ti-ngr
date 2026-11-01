@@ -152,16 +152,18 @@ def carga_proyectos(ins: dict) -> pd.DataFrame:
     escala = c["capacidad"]["horas_por_dia"] / 8
     horas_equipo_dia = eq["horas_semana"].sum() / 5 * escala
     horas_persona_dia = (eq["horas_semana"].mean() / 5 * escala) if len(eq) else 0
+    horas_jefes_dia = eq[eq["rol"] == "Jefe"]["horas_semana"].sum() / 5 * escala
     filas = []
     for _, pr in ins["proyectos"].iterrows():
         dias = du[(du >= pr["inicio"]) & (du <= pr["fin"])]
-        # base "equipo": % de todo el equipo; base "persona": % de un solo recurso
-        hdia = horas_persona_dia if str(pr.get("base", "equipo")) == "persona" else horas_equipo_dia
+        # base "equipo": % de todo el equipo; "jefes": % de los jefes; "persona": % de un solo recurso
+        base = str(pr.get("base", "equipo"))
+        hdia = {"persona": horas_persona_dia, "jefes": horas_jefes_dia}.get(base, horas_equipo_dia)
         for m in range(1, 13):
             n = int((dias.month == m).sum())
             filas.append({"mes": m, "codigo": pr["codigo"], "proyecto": pr["proyecto"],
-                          "tipo": pr["tipo"], "horas": n * hdia * pr["participacion"]})
-    return pd.DataFrame(filas, columns=["mes", "codigo", "proyecto", "tipo", "horas"])
+                          "tipo": pr["tipo"], "base": base, "horas": n * hdia * pr["participacion"]})
+    return pd.DataFrame(filas, columns=["mes", "codigo", "proyecto", "tipo", "base", "horas"])
 
 
 # ---------- Pronóstico de cantidades ----------

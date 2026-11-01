@@ -327,19 +327,33 @@ function renderRooms(){
   });
 }
 
+// Reparte las horas de proyectos del mes entre las personas (base "jefes" solo a los jefes)
+function cargaProyectosPorPersona(m, netas){
+  const carga = {}; for (const n in netas) carga[n] = 0;
+  const jefes = Object.keys(netas).filter(n => (D.personas.find(p => p.persona === n) || {}).rol === "Jefe");
+  const reparte = (horas, grupo) => {
+    const tot = grupo.reduce((t,n)=>t+netas[n],0);
+    if (!grupo.length || tot <= 0) grupo = Object.keys(netas);
+    const t2 = grupo.reduce((t,n)=>t+netas[n],0) || 1;
+    grupo.forEach(n => carga[n] += horas * netas[n] / t2);
+  };
+  const ps = D.proyectos.filter(p => p.mes === m);
+  reparte(ps.filter(p => p.base === "jefes").reduce((t,p)=>t+p.horas,0), jefes);
+  reparte(ps.filter(p => p.base !== "jefes").reduce((t,p)=>t+p.horas,0) + (CASCADA[m]?.pendIn || 0), Object.keys(netas));
+  return carga;
+}
 // Horas disponibles de cada persona = horas netas − su parte de los proyectos del mes
 function iniciarDisponibles(){
-  const proyMes = D.proyectos.filter(p => p.mes === mes).reduce((s,p)=>s+p.horas,0) + (CASCADA[mes]?.pendIn || 0);
   const netas = {};
   for (const nombre of Object.keys(deskInfo)) {
     const p = D.personas.find(x => x.persona === nombre);
     const m = p ? p.meses.find(x => x.mes === mes) : null;
     netas[nombre] = m ? m.horas_netas : 0;
   }
-  const totNetas = Object.values(netas).reduce((a,b)=>a+b,0) || 1;
+  const carga = cargaProyectosPorPersona(mes, netas);
   for (const [nombre, d] of Object.entries(deskInfo)) {
     d.netas = netas[nombre];
-    d.proyectos = proyMes * netas[nombre] / totNetas;
+    d.proyectos = carga[nombre];
     d.disponible = d.netas - d.proyectos;
     pintarDisponible(nombre);
   }
@@ -476,16 +490,16 @@ function reingresar(tipo, horas, look, sq, k){
 
 // ---------- Simulación rápida (sin animación) de los meses anteriores ----------
 function disponiblesMes(m){
-  const proyMes = D.proyectos.filter(p => p.mes === m).reduce((t,p)=>t+p.horas,0) + (CASCADA[m]?.pendIn || 0);
+  const proyMes = D.proyectos.filter(p => p.mes === m).reduce((t,p)=>t+p.horas,0);
   const netas = {};
   for (const nombre of Object.keys(DESKS)) {
     const p = D.personas.find(x => x.persona === nombre);
     const mm = p ? p.meses.find(x => x.mes === m) : null;
     netas[nombre] = mm ? mm.horas_netas : 0;
   }
-  const tot = Object.values(netas).reduce((a,b)=>a+b,0) || 1;
+  const carga = cargaProyectosPorPersona(m, netas);
   const disp = {};
-  for (const n in netas) disp[n] = netas[n] - proyMes * netas[n] / tot;
+  for (const n in netas) disp[n] = netas[n] - carga[n];
   return {disp, proyMes};
 }
 function asignarRapido(disp, sq, horas){  // misma regla que el jefe en la animación

@@ -112,7 +112,7 @@
 
     <section class="card" id="sec-pr">
       <h2><span class="n">7</span>Proyectos</h2>
-      <p class="d">Participación = % de dedicación. Base "equipo" aplica el % sobre todo el equipo; base "persona", sobre un solo recurso.</p>
+      <p class="d">Participación = % de dedicación. Base "equipo" aplica el % sobre todo el equipo; "jefes", solo sobre los jefes; "persona", sobre un solo recurso.</p>
       <table id="t-proyectos"></table>
       <button class="btn add" data-add="proyectos">+ Agregar proyecto</button>
     </section>
@@ -223,7 +223,7 @@ const TABLAS = {
   },
   proyectos: {
     cols: [["incluir","Incluir","chk"],["codigo","Código","text","w-xs"],["proyecto","Proyecto","text","w-l"],["tipo","Tipo","sel","w-m",[["Tecnologia","TI"],["Transformacional","Transformacional"]]],
-           ["inicio","Inicio","date","w-m"],["fin","Fin","date","w-m"],["participacion","Participación %","pct","w-xs"],["base","Base","sel","w-s",[["equipo","Equipo"],["persona","Persona"]]]],
+           ["inicio","Inicio","date","w-m"],["fin","Fin","date","w-m"],["participacion","Participación %","pct","w-xs"],["base","Base","sel","w-s",[["equipo","Equipo"],["jefes","Jefes"],["persona","Persona"]]]],
     nuevo: () => ({incluir:true, codigo:"N"+(CFG.proyectos.length+1), proyecto:"Nuevo proyecto", tipo:"Tecnologia", inicio:"2027-07-01", fin:"2027-11-30", participacion:0.1, base:"equipo"}),
   },
   vacaciones: {
