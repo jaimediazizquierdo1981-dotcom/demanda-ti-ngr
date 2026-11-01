@@ -40,7 +40,6 @@
 
   <button class="entrar" id="b">Ingresar</button>
   <div class="err" id="err"></div>
-  <div class="pie">La sesión dura 8 horas.</div>
 </form>
 <script>
 const img = document.getElementById("img");
@@ -60,7 +59,7 @@ document.getElementById("f").onsubmit = async e => {
     return;
   }
   const d = await r.json().catch(() => ({}));
-  err.textContent = d.detail || "No se pudo ingresar.";
+  err.textContent = (d.detail || "No se pudo ingresar.") + (r.status === 401 ? " El código de verificación sí era correcto." : "");
   b.disabled = false; nuevoCaptcha();
 };
 </script>
