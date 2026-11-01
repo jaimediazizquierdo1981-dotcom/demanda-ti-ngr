@@ -675,10 +675,10 @@ function renderTabla(){
     const filas = [
       d.sinDisp ? null : ['Horas disponibles<small>' + d.dispNota + '</small>', r => val(fmt(d.disp(r)), (d.disp(r) <= 0 ? "neg" : "") + cur(r))],
       ['Demanda proyectada<small>modelo</small>', r => val(fmt(d.proy(r)), cur(r))],
-      ['Demanda real<small>' + d.realNota + '</small>', r => d.real(r) === null ? na(r) : val(fmt(d.real(r)), cur(r))],
-      ['Desvío de la demanda<small>real − proyectada (+ = llegó más de lo previsto)</small>', r => { const x = d.real(r); if (x === null) return na(r); const dv = x - d.proy(r); return val(Math.abs(dv) < .5 ? "–" : signo(dv), (dv > .5 ? "neg" : dv < -.5 ? "pos" : "") + cur(r)); }],
+      ['Consumo real<small>' + d.realNota + '</small>', r => d.real(r) === null ? na(r) : val(fmt(d.real(r)), cur(r))],
+      ['Desvío de la demanda<small>consumo real − demanda proyectada (+ = se consumió más de lo previsto)</small>', r => { const x = d.real(r); if (x === null) return na(r); const dv = x - d.proy(r); return val(Math.abs(dv) < .5 ? "–" : signo(dv), (dv > .5 ? "neg" : dv < -.5 ? "pos" : "") + cur(r)); }],
       ['Pendiente que viene del mes anterior', r => { const p = d.pendIn(r); if (p === null) return na(r); return val(p >= .5 ? fmt(p) : "–", cur(r)); }],
-      ['Saldo del mes<small>' + (d.saldoNota || 'disponibles − demanda real − pendiente anterior') + '</small>', r => { const x = d.saldo(r); if (x === null) return na(r); return val(signo(x), (x < -.5 ? "neg" : "pos") + cur(r)); }],
+      ['Saldo del mes<small>' + (d.saldoNota || 'disponibles − consumo real − pendiente anterior') + '</small>', r => { const x = d.saldo(r); if (x === null) return na(r); return val(signo(x), (x < -.5 ? "neg" : "pos") + cur(r)); }],
       ['Pendiente que pasa al mes siguiente<small>' + d.pendNota + '</small>', r => { const p = d.pendOut(r); if (p === null) return na(r); const gris = d.pendGris && d.pendGris(r); return val(p >= .5 ? fmt(p) : "–", (gris ? "na" : (p >= .5 ? "neg" : "")) + cur(r)); }],
       ['Terceros necesarios<small>exceso del mes ÷ ' + fmt(h3) + ' h por tercero</small>', r => { const t = d.terceros(r); return val(t ? "+" + t : "–", (t ? "neg" : "") + cur(r)); }],
     ].filter(Boolean);
@@ -707,7 +707,7 @@ function renderTabla(){
       D.resumen.map(r => fn(r).replace('class="', i===filasH.length-1 ? 'class="last ' : 'class="')).join("")).join("");
 
   cuadro("tablaP", "Proyectos", "TI + transformacionales · tienen prioridad sobre los pedidos", {
-    sinDisp: true, saldoNota: "horas del equipo − demanda real − pendiente anterior",
+    sinDisp: true, saldoNota: "horas del equipo − consumo real − pendiente anterior",
     dispNota: "",
     disp: r => r.horas_netas,
     proy: r => r.horas_proyectos,
