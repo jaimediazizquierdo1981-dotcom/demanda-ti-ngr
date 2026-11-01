@@ -164,6 +164,20 @@ def vista_oficina():
     return FileResponse(STATIC / "oficina.html")
 
 
+@app.get("/api/historico_mensual")
+def api_historico_mensual():
+    from motor.modelo import _historico
+    h = _historico(DATA)
+    m = h.groupby([h["fecha"].dt.to_period("M").astype(str), "tipo"]).size().unstack(fill_value=0).reset_index()
+    m.columns = ["mes"] + list(m.columns[1:])
+    return m.to_dict(orient="records")
+
+
+@app.get("/modelos")
+def vista_modelos():
+    return FileResponse(STATIC / "modelos.html")
+
+
 @app.get("/parametros")
 def vista_parametros():
     return FileResponse(STATIC / "parametros.html")

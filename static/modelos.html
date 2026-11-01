@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelos · Demanda TI NGR</title>
+<link rel="stylesheet" href="/static/comun.css">
+<style>
+  main{padding:18px 24px 40px;max-width:1100px;margin:0 auto}
+  h1{font-size:20px;margin:0 0 4px} .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .flujo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 20px;font-size:12.5px}
+  .flujo span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+  .flujo b{color:var(--muted);font-weight:400}
+  section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:14px}
+  section h2{margin:0 0 2px;font-size:17px;display:flex;gap:10px;align-items:center}
+  section h2 .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px}
+  .rol{color:var(--muted);font-size:12.5px;margin-bottom:10px}
+  p{margin:8px 0;line-height:1.55}
+  .ej{background:#f6f8fc;border-left:4px solid #6c8cc7;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:13.5px}
+  .ej b{color:var(--accent)}
+  .ojo{background:#fff7e6;border-left:4px solid var(--warn);border-radius:6px;padding:8px 14px;margin:10px 0;font-size:13px}
+  table{border-collapse:collapse;font-size:13px;margin:8px 0;font-variant-numeric:tabular-nums}
+  th,td{border-bottom:1px solid #eee;padding:5px 10px;text-align:right} th{color:var(--muted);font-weight:600;font-size:12px} td:first-child,th:first-child{text-align:left}
+  svg{width:100%;height:auto}
+  .ley{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+  .ley i{display:inline-block;width:14px;height:3px;margin-right:6px;vertical-align:3px}
+  code{background:#f1efe9;padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+<script src="/static/comun.js"></script>
+<script>nav("Modelos")</script>
+<main>
+  <h1>Cómo se estima la demanda</h1>
+  <div class="sub">Los modelos que usa la app, en el orden en que se aplican. Los ejemplos se calculan en vivo con los datos y parámetros actuales.</div>
+  <div class="flujo">
+    <span>1 · Histórico mensual</span><b>→</b><span>2 · Holt-Winters</span><b>+</b><span>3 · Filtro de Kalman</span><b>→</b>
+    <span>4 · Promedio</span><b>→</b><span>5 · Mezcla por nivel</span><b>→</b><span>6 · Horas por pedido</span><b>→</b>
+    <span>7 · Poisson + Monte Carlo</span><b>·</b><span>8 · Erlang C</span><b>·</b><span>9 · Capacidad y arrastre</span>
+  </div>
+
+  <section>
+    <h2><span class="n">1</span>Punto de partida: el histórico mensual</h2>
+    <div class="rol">Qué alimenta a los modelos.</div>
+    <p>Los pedidos del histórico se cuentan por mes y por tipo (requerimientos e incidencias). Esa serie de meses es la que los modelos usan para estimar cuántos pedidos llegarán en 2027. El gráfico muestra el histórico y lo que proyecta cada modelo.</p>
+    <svg id="g" viewBox="0 0 1000 300"></svg>
+    <div class="ley"><span><i style="background:#2f6fd6"></i>Requerimientos (histórico)</span><span><i style="background:#e0453a"></i>Incidencias (histórico)</span>
+      <span><i style="background:#2f6fd6;opacity:.5"></i>Estimado 2027 (promedio de modelos)</span><span><i style="background:#e0453a;opacity:.5"></i>Estimado 2027 incidencias</span></div>
+    <div class="ej" id="ej1"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>Holt-Winters (suavizamiento exponencial)</h2>
+    <div class="rol">Estima el nivel y la tendencia de la serie.</div>
+    <p>Holt-Winters resume la historia en tres componentes que va actualizando mes a mes: el <b>nivel</b> (cuántos pedidos llegan "normalmente"), la <b>tendencia</b> (si eso sube o baja) y la <b>estacionalidad</b> (meses que siempre son más altos o más bajos, como julio o diciembre). Le da más peso a los meses recientes que a los antiguos. La tendencia está <b>amortiguada</b>: se va aplanando para no proyectar crecimientos infinitos.</p>
+    <div class="ej" id="ej2"></div>
+    <div class="ojo">Para medir la estacionalidad, Holt-Winters necesita al menos 2 años completos (24 meses). El histórico actual tiene 22 meses, así que por ahora trabaja <b>solo con nivel y tendencia</b>; la estacionalidad la aporta el filtro de Kalman. Cuando cargues 24 meses o más, Holt-Winters la incluye solo.</div>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span>Filtro de Kalman (modelo de componentes)</h2>
+    <div class="rol">Separa la señal del ruido y capta la estacionalidad.</div>
+    <p>Supone que detrás de lo que se observa cada mes hay un <b>nivel real</b> que no se ve directamente, más un patrón estacional y ruido aleatorio. El filtro de Kalman estima ese nivel oculto: cuando llega un mes raro (por ejemplo, un pico por una campaña), no lo toma completo, sino que decide cuánto es cambio real y cuánto es ruido. Usa ondas suaves para representar los meses altos y bajos del año.</p>
+    <div class="ej" id="ej3"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>Promedio de ambos modelos (ensamble)</h2>
+    <div class="rol">Reduce el error de confiar en un solo modelo.</div>
+    <p>Cada modelo se equivoca de forma distinta: Holt-Winters reacciona más a la tendencia y Kalman es más conservador con los picos. Promediar los dos suele dar una estimación más estable. En Parámetros → Demanda puedes elegir usar solo uno, o desmarcar "Tendencia y estacionalidad" para usar el promedio simple del histórico.</p>
+    <div class="ej" id="ej4"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span>Mezcla por complejidad e impacto</h2>
+    <div class="rol">Reparte el total estimado entre niveles.</div>
+    <p>Los modelos estiman el <b>total</b> de pedidos del mes (es más estable que estimar cada nivel por separado). Ese total se reparte según la proporción que tuvo cada nivel en el histórico.</p>
+    <div id="mezcla"></div>
+    <div class="ej" id="ej5"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">6</span>Horas por pedido</h2>
+    <div class="rol">Convierte cantidad de pedidos en horas.</div>
+    <p>Cada pedido estimado se multiplica por sus horas. Los requerimientos usan el rango por complejidad (con "peor escenario", el máximo). Las incidencias usan las horas de atención definidas, y su impacto solo marca la prioridad de asignación.</p>
+    <div class="ej" id="ej6"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">7</span>Poisson + Monte Carlo (colchón de variabilidad)</h2>
+    <div class="rol">Opcional: mide cuánto puede variar un mes. Hoy está desactivado.</div>
+    <p>Los pedidos no llegan en una cantidad fija: si el promedio es 10, un mes llegan 7 y otro 14. La <b>distribución de Poisson</b> describe ese tipo de llegadas al azar. <b>Monte Carlo</b> simula miles de meses posibles con esa distribución y mira, por ejemplo, cuántas horas cubren 9 de cada 10 meses (percentil 90). La diferencia con el promedio es el colchón.</p>
+    <div class="ej" id="ej7"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">8</span>Erlang C (personas mínimas para incidencias)</h2>
+    <div class="rol">Cuántas personas deben estar disponibles para que las incidencias no esperen.</div>
+    <p>Viene de los centros de llamadas: con la tasa de llegada de incidencias y lo que tarda cada una, calcula la probabilidad de que una incidencia tenga que esperar porque todos están ocupados. Se busca el número mínimo de personas para que esa probabilidad quede bajo el objetivo (hoy 20%).</p>
+    <div class="ej" id="ej8"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">9</span>Capacidad, arrastre y terceros</h2>
+    <div class="rol">No es un modelo estadístico: es la regla de cálculo que cruza demanda y capacidad.</div>
+    <p>Las horas del equipo descuentan vacaciones, descansos médicos y gestión de jefes. Los proyectos tienen prioridad; requerimientos e incidencias usan lo que queda más las horas de terceros (50% el primer mes). Lo que no se atiende en un mes pasa al siguiente. Los terceros necesarios son el exceso del mes ÷ horas de un tercero.</p>
+    <div class="ej" id="ej9"></div>
+  </section>
+</main>
+<script>
+const M = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const f1 = n => (+n).toLocaleString("es-PE", {maximumFractionDigits: 1});
+Promise.all([calcular(), fetch("/api/historico_mensual").then(r => r.json())]).then(([d, hist]) => {
+  const P = d.pronostico, R = d.resumen;
+  const tot = (tipo, campo, m) => { const x = P.find(p => p.tipo === tipo && p.mes === m); return x ? x[campo] : 0; };
+  const m = 3; // ejemplo: marzo 2027
+  const reqH = hist.map(h => h.requerimiento || 0), incH = hist.map(h => h.incidencia || 0);
+  const prom = a => a.reduce((x,y)=>x+y,0) / Math.max(1, a.length);
+
+  // gráfico: histórico + estimado 2027
+  const est = t => M.map((_, i) => tot(t, "total_tipo", i+1));
+  const serie = [...reqH, ...est("requerimiento")], serieI = [...incH, ...est("incidencia")];
+  const n = serie.length, W = 1000, H = 300, L = 40, T = 15, B = 40, max = Math.ceil(Math.max(...serie, ...serieI) * 1.15 / 5) * 5;
+  const x = i => L + (W - L - 30) * i / (n - 1), y = v => T + (H - T - B) * (1 - v / max);
+  let g = "";
+  for (let v = 0; v <= max; v += 5) g += `<line x1="${L}" x2="${W-10}" y1="${y(v)}" y2="${y(v)}" stroke="#eee"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#888">${v}</text>`;
+  g += `<rect x="${x(hist.length-.5)}" y="${T}" width="${W-10-x(hist.length-.5)}" height="${H-T-B}" fill="#f4f6fa"/>`;
+  g += `<text x="${x(hist.length)+4}" y="${T+14}" font-size="11" fill="#6b7280">2027 estimado</text>`;
+  const linea = (a, c, desde, hasta, dash) => `<polyline fill="none" stroke="${c}" stroke-width="2.5" ${dash ? 'stroke-dasharray="6 4" opacity=".7"' : ""} points="${a.slice(desde, hasta).map((v, i) => x(desde+i) + "," + y(v)).join(" ")}"/>`;
+  g += linea(serie, "#2f6fd6", 0, hist.length) + linea(serie, "#2f6fd6", hist.length - 1, n, true);
+  g += linea(serieI, "#e0453a", 0, hist.length) + linea(serieI, "#e0453a", hist.length - 1, n, true);
+  [...hist.map(h => h.mes), ...M.map((_, i) => "2027-" + String(i+1).padStart(2, "0"))].forEach((mes, i) => {
+    if (i % 3 === 0) g += `<text x="${x(i)}" y="${H-B+16}" text-anchor="middle" font-size="10.5" fill="#666">${M[+mes.slice(5)-1]} ${mes.slice(2,4)}</text>`;
+  });
+  document.getElementById("g").innerHTML = g;
+
+  const hw = t => tot(t, "total_holt_winters", m), kf = t => tot(t, "total_kalman", m), pr = t => tot(t, "total_tipo", m);
+  document.getElementById("ej1").innerHTML = `<b>Ejemplo:</b> el histórico tiene ${hist.length} meses. En promedio llegaron <b>${f1(prom(reqH))}</b> requerimientos y <b>${f1(prom(incH))}</b> incidencias por mes; en los últimos 6 meses, ${f1(prom(reqH.slice(-6)))} y ${f1(prom(incH.slice(-6)))}.`;
+  document.getElementById("ej2").innerHTML = `<b>Ejemplo (marzo 2027):</b> Holt-Winters estima <b>${f1(hw("requerimiento"))}</b> requerimientos y <b>${f1(hw("incidencia"))}</b> incidencias. Toma el nivel reciente y le suma una tendencia que se va aplanando mes a mes.`;
+  document.getElementById("ej3").innerHTML = `<b>Ejemplo (marzo 2027):</b> el filtro de Kalman estima <b>${f1(kf("requerimiento"))}</b> requerimientos y <b>${f1(kf("incidencia"))}</b> incidencias. Su estimado sube y baja a lo largo del año según los meses altos y bajos del histórico.`;
+  document.getElementById("ej4").innerHTML = `<b>Ejemplo (marzo 2027):</b> requerimientos = (${f1(hw("requerimiento"))} + ${f1(kf("requerimiento"))}) ÷ 2 = <b>${f1(pr("requerimiento"))}</b>; incidencias = (${f1(hw("incidencia"))} + ${f1(kf("incidencia"))}) ÷ 2 = <b>${f1(pr("incidencia"))}</b>.`;
+
+  const fila = (t, nivel) => P.find(p => p.tipo === t && p.nivel === nivel && p.mes === m);
+  const niv = {requerimiento: ["Alta","Media","Baja"], incidencia: ["Alto","Medio","Bajo"]};
+  document.getElementById("mezcla").innerHTML = `<table><tr><th>Tipo</th><th>Nivel</th><th>Mezcla histórica</th><th>Pedidos estimados (marzo)</th><th>Horas por pedido</th><th>Horas</th></tr>` +
+    ["requerimiento","incidencia"].flatMap(t => niv[t].map(nv => { const r = fila(t, nv) || {mezcla:0, lambda:0}; const h = d.horas_pedido[t][nv];
+      return `<tr><td>${t === "requerimiento" ? "Requerimiento" : "Incidencia"}</td><td>${nv}</td><td>${Math.round(r.mezcla*100)}%</td><td>${f1(r.lambda)}</td><td>${f1(h)}</td><td>${f1(r.lambda*h)}</td></tr>`; })).join("") + "</table>";
+  const fa = fila("requerimiento","Alta");
+  document.getElementById("ej5").innerHTML = `<b>Ejemplo:</b> si en marzo se estiman ${f1(pr("requerimiento"))} requerimientos y el ${Math.round(fa.mezcla*100)}% del histórico fue de complejidad alta, se esperan ${f1(pr("requerimiento"))} × ${Math.round(fa.mezcla*100)}% = <b>${f1(fa.lambda)}</b> requerimientos de complejidad alta.`;
+  const r3 = R.find(r => r.mes === m);
+  document.getElementById("ej6").innerHTML = `<b>Ejemplo (marzo 2027):</b> requerimientos = <b>${f1(r3.horas_req)} h</b> e incidencias = <b>${f1(r3.horas_inc)} h</b> (suma de la última columna de la tabla anterior). Total: ${f1(r3.horas_req + r3.horas_inc)} h de requerimientos e incidencias.`;
+  document.getElementById("ej7").innerHTML = `<b>Ejemplo:</b> en marzo se esperan ${f1(r3.req_esperados + r3.inc_esperadas)} pedidos en promedio. Simulando 5,000 marzos, en algunos llegan bastante más. Si activas el colchón con percentil 90, la app reserva las horas que alcanzan para 9 de cada 10 de esos meses. Hoy el colchón está ${r3.colchon > 0 ? "activado: suma <b>" + f1(r3.colchon) + " h</b> en marzo" : "<b>desactivado</b>, así que se planifica con el promedio"}.`;
+  document.getElementById("ej8").innerHTML = `<b>Ejemplo (marzo 2027):</b> llegan ~${f1(r3.inc_esperadas)} incidencias en el mes, de ${d.horas_pedido.incidencia.Alto} h cada una. Eso equivale a una carga de ${f1(r3.carga_erlangs)} personas ocupadas en promedio. Para que la probabilidad de espera quede bajo 20%, se necesitan al menos <b>${r3.personas_min_incidencias}</b> persona(s) disponibles para incidencias.`;
+  document.getElementById("ej9").innerHTML = `<b>Ejemplo (marzo 2027):</b> horas del equipo ${f1(r3.horas_netas)} − proyectos ${f1(r3.horas_proyectos)} = ${f1(Math.max(0, r3.horas_netas - r3.horas_proyectos - r3.pend_proy_entrante))} h libres` +
+    (r3.horas_terceros ? ` + ${f1(r3.horas_terceros)} h de terceros` : "") + ` para ${f1(r3.horas_req + r3.horas_inc)} h de requerimientos e incidencias. Pendiente que pasa a abril: <b>${f1(r3.pendiente_cierre)} h</b>; terceros que faltarían: <b>${r3.terceros || 0}</b>.`;
+}).catch(() => { document.querySelector("main").insertAdjacentHTML("beforeend", "<p>No se pudieron cargar los ejemplos.</p>"); });
+</script>
+</body>
+</html>
