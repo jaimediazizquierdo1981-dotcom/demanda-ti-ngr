@@ -154,6 +154,7 @@ const CRITERIOS = [
   ["requerimientos", "Requerimientos", "Incluye la demanda proyectada de requerimientos."],
   ["incidencias", "Incidencias", "Incluye la demanda proyectada de incidencias."],
   ["colchon_variabilidad", "Colchón de variabilidad", "Reserva horas para meses con más pedidos que el promedio (percentil de plan)."],
+  ["arrastre_pendientes", "Arrastre de pendientes", "Lo que no se resuelve en un mes pasa al mes siguiente (si no se cubre con terceros)."],
   ["tendencia_y_estacionalidad", "Tendencia y estacionalidad", "Proyecta con Holt-Winters / Kalman. Si se desmarca, usa el promedio histórico plano."],
 ];
 
@@ -184,7 +185,8 @@ function renderGeneral(){
   document.getElementById("capacidad").innerHTML =
     campo("capacidad.horas_por_dia", "Jornada diaria", "Horas por día de una persona a tiempo completo.", "h/día", 1, 0.5) +
     campo("capacidad.dias_descanso_medico_anual", "Descansos médicos por persona", "Días útiles al año, repartidos en proporción a cada mes.", "días/año", 1, 1) +
-    campo("capacidad.horas_gestion_dia_jefe", "Gestión de cada jefe", "Horas diarias que el jefe dedica a gestión y no a ejecutar.", "h/día", 1, 0.5);
+    campo("capacidad.horas_gestion_dia_jefe", "Gestión de cada jefe", "Horas diarias que el jefe dedica a gestión y no a ejecutar.", "h/día", 1, 0.5) +
+    campo("capacidad.horas_mes_tercero", "Horas de un tercero", "Horas al mes que aporta cada tercero contratado para cubrir el exceso.", "h/mes", 1, 8);
 
   document.getElementById("demanda").innerHTML =
     opcion("demanda.metodo", "Método de proyección", "Cómo se proyecta el total mensual de pedidos.",

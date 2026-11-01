@@ -58,7 +58,10 @@ calcular().then(d => {
     fila("Capacidad neta", r => r.horas_netas, "tot") +
     fila("Brecha", r => r.brecha_horas, "tot brecha", v => (v>0?"+":"") + fmtH(v)) +
     `<tr><td>Utilización</td>${R.map(r=>`<td>${util(r.utilizacion)}</td>`).join("")}<td>${util(dem/cap)}</td></tr>` +
-    `<tr class="tot sep"><td>Personas adicionales</td>${R.map(r=>`<td class="${r.personas_adicionales?"neg":""}">${r.personas_adicionales||"–"}</td>`).join("")}<td></td></tr>` +
+    fila("Pendiente que viene del mes anterior", r => r.arrastre_entrante) +
+    fila("Pendiente al cierre (pasa al mes siguiente, sin terceros)", r => r.pendiente_cierre, "", fmtH, false) +
+    `<tr class="tot sep"><td>Terceros para cubrir el exceso</td>${R.map(r=>`<td class="${r.terceros?"neg":""}">${r.terceros||"–"}</td>`).join("")}<td></td></tr>` +
+    `<tr class="tot"><td>Personas adicionales (contratación)</td>${R.map(r=>`<td class="${r.personas_adicionales?"neg":""}">${r.personas_adicionales||"–"}</td>`).join("")}<td></td></tr>` +
     `<tr><td>Alertar en</td>${R.map(r=>`<td>${r.alertar_en||""}</td>`).join("")}<td></td></tr>` +
     `<tr><td>Personas mín. para incidencias (Erlang C)</td>${R.map(r=>`<td>${r.personas_min_incidencias}</td>`).join("")}<td></td></tr>`;
   const brecha = cap - dem;
@@ -66,7 +69,9 @@ calcular().then(d => {
   const def = R.filter(r=>r.brecha_horas<0).map(r=>r.mes_nombre);
   const k = [["Personas en el equipo", d.n_personas, ""],["Capacidad neta año", fmtH(cap)+" h",""],["Demanda año", fmtH(dem)+" h",""],
              ["Brecha año", (brecha>=0?"+":"")+fmtH(brecha)+" h", brecha<0?"bad":"ok"],["Utilización año", fmtPct(dem/cap), dem>cap?"bad":"ok"],
-             ["Pico por contratar", pico?("+"+pico):"—", pico?"bad":"ok"],["Meses con déficit", def.length?def.length:"0", def.length?"bad":"ok"]];
+             ["Pico por contratar", pico?("+"+pico):"—", pico?"bad":"ok"],
+             ["Pendiente a fin de año (sin terceros)", fmtH(R[11].pendiente_cierre)+" h", R[11].pendiente_cierre>0?"bad":"ok"],
+             ["Pico de terceros", Math.max(...R.map(r=>r.terceros)) || "—", Math.max(...R.map(r=>r.terceros))?"bad":"ok"],["Meses con déficit", def.length?def.length:"0", def.length?"bad":"ok"]];
   document.getElementById("kpis").innerHTML = k.map(([l,v,c])=>`<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
   document.getElementById("note").textContent = "Personas adicionales = brecha del mes ÷ horas netas promedio por persona, redondeado hacia arriba. Colchón = horas extra para cubrir meses con más pedidos que el promedio (percentil configurado).";
 }).catch(() => { document.getElementById("t").innerHTML = "<tr><td>No se pudo calcular.</td></tr>"; });

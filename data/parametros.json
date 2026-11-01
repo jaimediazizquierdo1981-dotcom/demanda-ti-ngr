@@ -10,12 +10,14 @@
     "requerimientos": true,
     "incidencias": true,
     "colchon_variabilidad": true,
-    "tendencia_y_estacionalidad": true
+    "tendencia_y_estacionalidad": true,
+    "arrastre_pendientes": true
   },
   "capacidad": {
     "horas_por_dia": 8,
     "dias_descanso_medico_anual": 5,
-    "horas_gestion_dia_jefe": 2
+    "horas_gestion_dia_jefe": 2,
+    "horas_mes_tercero": 160
   },
   "demanda": {
     "metodo": "promedio",

@@ -25,8 +25,16 @@
   main{padding:4px 24px 18px}
   .stage{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
   svg{display:block;width:100%;height:auto}
-  .timeline{display:flex;align-items:stretch;gap:6px;margin-top:12px}
+  .timeline{display:grid;grid-template-columns:230px 1fr;gap:6px;margin-top:12px;align-items:stretch}
   .ctrl{display:flex;gap:6px}
+  #meses{display:grid;grid-template-columns:repeat(12,1fr);gap:4px}
+  .tabla{display:grid;grid-template-columns:230px repeat(12,1fr);gap:0 4px;margin-top:6px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 0;font-variant-numeric:tabular-nums}
+  .tabla div{padding:5px 6px;text-align:center;font-size:12.5px;border-bottom:1px solid #f1ede5}
+  .tabla div.lbl{text-align:left;padding-left:14px;font-weight:600;font-size:12px}
+  .tabla div.lbl small{display:block;font-weight:400;color:var(--muted);font-size:10.5px}
+  .tabla .neg{color:var(--bad);font-weight:700} .tabla .pos{color:var(--ok);font-weight:600}
+  .tabla .na{color:#b9b3a6} .tabla .cur{background:#f6f4ef}
+  .tabla div.last{border-bottom:none}
   button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
   button:hover{border-color:#aaa}
   .mes{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px 4px;border-radius:8px;border:1px solid transparent;background:transparent}
@@ -59,9 +67,10 @@
   <div class="stage"><svg id="ofi" viewBox="0 0 1280 700" role="img" aria-label="Oficina animada del equipo de data"></svg>
     <div id="err">No se pudieron cargar los datos del motor.</div></div>
   <div class="timeline">
-    <div class="ctrl"><button id="play">⏸ Pausa</button><button id="vel">Velocidad ×1</button></div>
-    <div id="meses" style="display:flex;flex:1;gap:4px"></div>
+    <div class="ctrl"><button id="play">⏸ Pausa</button><button id="vel">Velocidad ×1</button><button id="reiniciar" title="Volver a enero sin pendientes">↺ Enero</button></div>
+    <div id="meses"></div>
   </div>
+  <div class="tabla" id="tabla"></div>
   <div class="legend">
     <span><i style="background:var(--req)"></i>Requerimiento</span>
     <span><i style="background:var(--inc)"></i>Incidencia</span>
@@ -94,7 +103,8 @@ function sortear(pesos){ // {clave: peso} -> clave
 let D, mes = 1, playing = true, speed = 1, visitors = [], layer, ghostLayer, roomLayer, waitLayer, rejLayer, deskInfo = {};
 const MONTH_MS = 28000;
 let elapsed = 0, spawned = 0, plan = [], robotBusy = 0;
-let espera = [], rechazados = [];   // personas sentadas (se quedan hasta el cambio de mes)
+let espera = [], rechazados = [];
+let sim = {};   // por mes: horas reales, atendidas y pendiente al cierre (simulación)   // personas sentadas (se quedan hasta el cambio de mes)
 
 function el(tag, attrs = {}, parent = layer){
   const e = document.createElementNS(NS, tag);
@@ -132,18 +142,63 @@ function asignarPuestos(){
   }
 }
 
-// Personita: hombre (pelo corto, polo) o mujer (pelo largo, vestido)
-function person(g, x, y, color, opts = {}){
+// ---------- Personitas diversas ----------
+const PIELES = ["#f8dcc2","#f2c9a0","#e0ac7e","#c68a5e","#a86b44","#8d5a3b","#5e3b26"];
+const PELOS = ["#1f1a17","#2e2520","#4a2f22","#6b4a2e","#a0622d","#c9a15a","#8a8a8a","#b23a2a"];
+const SOMBREROS = ["#2f3a4a","#7a2e2e","#2e5e3a","#c49a3a","#3a3a3a"];
+function aleatorio(seed){ // generador simple con semilla (para que el equipo siempre se vea igual)
+  let x = seed || Math.floor(Math.random()*1e9);
+  return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; };
+}
+function hash(t){ let h = 7; for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) % 2147483647; return h; }
+function lookAleatorio(mujer, seed){
+  const r = aleatorio(seed);
+  const pick = a => a[Math.floor(r()*a.length)];
+  if (mujer === undefined) mujer = r() < .5;
+  const pelos = mujer ? ["largo","largo","moño","afro","corto","coleta"] : ["corto","corto","calvo","afro","rapado","corto"];
+  const look = {mujer, piel: pick(PIELES), pelo: pick(PELOS), peinado: pick(pelos),
+    lentes: r() < .3, sombrero: r() < .22 ? pick(["gorra","fedora","gorra"]) : null, colorSombrero: pick(SOMBREROS)};
+  if (!mujer) { look.bigote = r() < .3; look.barba = r() < .18; }
+  else look.aretes = r() < .45;
+  if (look.peinado === "calvo" && r() < .5) look.sombrero = null;
+  return look;
+}
+
+function person(g, x, y, color, look = {}, badge = ""){
   const p = el("g", {transform:`translate(${x},${y})`}, g);
-  const mujer = opts.mujer, pelo = opts.pelo || "#3b2f2a", piel = opts.piel || "#f2c9a0";
+  const L = {piel:"#f2c9a0", pelo:"#3b2f2a", peinado: look.mujer ? "largo" : "corto", ...look};
   el("ellipse", {cx:0, cy:16, rx:11, ry:4, fill:"#000", opacity:.10}, p);
-  if (mujer) el("path", {d:"M-9.5,-12 a9.5,9.5 0 0 1 19,0 v13 q-4,2 -5,-2 v-6 h-9 v6 q-1,4 -5,2z", fill:pelo}, p);
-  if (mujer) el("path", {d:"M-7,-4 h14 l5,20 q-12,4 -24,0z", fill:color}, p);
+  // pelo de atrás
+  if (L.peinado === "largo") el("path", {d:"M-9.5,-12 a9.5,9.5 0 0 1 19,0 v13 q-4,2 -5,-2 v-6 h-9 v6 q-1,4 -5,2z", fill:L.pelo}, p);
+  if (L.peinado === "afro") el("circle", {cx:0, cy:-14, r:11.5, fill:L.pelo}, p);
+  if (L.peinado === "coleta") el("path", {d:"M6,-14 q9,2 6,14 q-3,-6 -7,-8z", fill:L.pelo}, p);
+  // cuerpo
+  if (L.mujer) el("path", {d:"M-7,-4 h14 l5,20 q-12,4 -24,0z", fill:color}, p);
   else el("rect", {x:-9, y:-4, width:18, height:20, rx:8, fill:color}, p);
-  el("circle", {cx:0, cy:-12, r:8, fill:piel}, p);
-  if (mujer) el("path", {d:"M-8.5,-13 q8.5,-12 17,0 q-5,-6 -17,0z", fill:pelo}, p);
-  else el("path", {d:"M-8,-14 q8,-10 16,0 q-8,-4 -16,0z", fill:pelo}, p);
-  if (opts.badge) txt(12, -14, opts.badge, {"font-size":12}, p);
+  // cabeza y cara
+  el("circle", {cx:0, cy:-12, r:8, fill:L.piel}, p);
+  el("circle", {cx:-2.8, cy:-12.5, r:.95, fill:"#222"}, p);
+  el("circle", {cx:2.8, cy:-12.5, r:.95, fill:"#222"}, p);
+  // pelo de adelante
+  if (L.peinado === "corto" || L.peinado === "coleta") el("path", {d:"M-8,-14 q8,-10 16,0 q-8,-4 -16,0z", fill:L.pelo}, p);
+  if (L.peinado === "largo") el("path", {d:"M-8.5,-13 q8.5,-12 17,0 q-5,-6 -17,0z", fill:L.pelo}, p);
+  if (L.peinado === "rapado") el("path", {d:"M-7.8,-15 q7.8,-7 15.6,0 q-7.8,-2.5 -15.6,0z", fill:L.pelo, opacity:.7}, p);
+  if (L.peinado === "moño") { el("path", {d:"M-8,-14 q8,-10 16,0 q-8,-4 -16,0z", fill:L.pelo}, p); el("circle", {cx:0, cy:-22, r:4, fill:L.pelo}, p); }
+  if (L.peinado === "calvo") { el("path", {d:"M-8,-11 q-1,-3 1,-5", stroke:L.pelo, "stroke-width":1.6, fill:"none"}, p); el("path", {d:"M8,-11 q1,-3 -1,-5", stroke:L.pelo, "stroke-width":1.6, fill:"none"}, p); }
+  // barba y bigote
+  if (L.barba) el("path", {d:"M-7.5,-11 q0,10 7.5,10 q7.5,0 7.5,-10 q-2,6 -7.5,6 q-5.5,0 -7.5,-6z", fill:L.pelo}, p);
+  if (L.bigote) el("path", {d:"M-4.2,-8.3 q4.2,-2.6 8.4,0 q-4.2,1.4 -8.4,0z", fill:L.pelo}, p);
+  // lentes
+  if (L.lentes) {
+    el("circle", {cx:-3.2, cy:-12.3, r:2.5, fill:"none", stroke:"#1f2430", "stroke-width":1}, p);
+    el("circle", {cx:3.2, cy:-12.3, r:2.5, fill:"none", stroke:"#1f2430", "stroke-width":1}, p);
+    el("line", {x1:-.7, y1:-12.3, x2:.7, y2:-12.3, stroke:"#1f2430", "stroke-width":1}, p);
+  }
+  if (L.aretes) { el("circle", {cx:-8, cy:-9, r:1.4, fill:"#e6b422"}, p); el("circle", {cx:8, cy:-9, r:1.4, fill:"#e6b422"}, p); }
+  // sombreros
+  if (L.sombrero === "gorra") { el("path", {d:"M-8.6,-15 a8.6,7 0 0 1 17.2,0z", fill:L.colorSombrero}, p); el("rect", {x:2, y:-16.2, width:10, height:2.6, rx:1.3, fill:L.colorSombrero}, p); }
+  if (L.sombrero === "fedora") { el("rect", {x:-11.5, y:-19, width:23, height:2.6, rx:1.3, fill:L.colorSombrero}, p); el("rect", {x:-6.5, y:-26, width:13, height:8, rx:2.5, fill:L.colorSombrero}, p); el("rect", {x:-6.5, y:-20.5, width:13, height:1.6, fill:"#00000040"}, p); }
+  if (badge) txt(12, -14, badge, {"font-size":12}, p);
   return p;
 }
 
@@ -212,7 +267,7 @@ function buildStatic(){
     el("rect", {x:d.x-18, y:d.y-34, width:36, height:20, rx:3, fill:"#2b3240"}, g);
     const screen = el("rect", {x:d.x-15, y:d.y-31, width:30, height:14, rx:2, fill:"#6ee7ff", opacity:.6}, g);
     person(g, d.x, d.y+26, d.sq===1 ? "var(--sq1)" : "var(--sq2)",
-           {badge: info.rol==="Jefe" ? "🧭" : "", mujer: info.genero === "Mujer", pelo: info.genero === "Mujer" ? "#4a2f22" : "#2e2520"});
+           lookAleatorio(info.genero === "Mujer", hash(nombre)), info.rol==="Jefe" ? "🧭" : "");
     txt(d.x, d.y+56, nombre, {"text-anchor":"middle", "font-size":12, "font-weight":600}, g);
     const sub = txt(d.x, d.y+69, "", {"text-anchor":"middle", "font-size":10, fill:"var(--muted)"}, g);
     // barra de horas disponibles
@@ -347,22 +402,71 @@ function buildTimeline(){
       <div class="bar"><i style="height:${u/1.5*100}%;background:${colorUtil(r.utilizacion)}"></i><b style="bottom:${100/1.5}%"></b></div>
       <span>${r.mes_nombre}</span><small>${pct(r.utilizacion)}</small></button>`;
   }).join("");
-  c.querySelectorAll(".mes").forEach(b => b.onclick = () => { setMes(+b.dataset.m); });
+  c.querySelectorAll(".mes").forEach(b => b.onclick = () => { sim = {}; espera = []; setMes(+b.dataset.m); });
 }
 
-function setMes(m){
+function setMes(m, continuar = false){
+  // al cerrar el mes, lo que quedó en la sala de espera es el pendiente
+  if (sim[mes]) sim[mes].pendiente = espera.reduce((t,v)=>t+v.horas,0), sim[mes].cerrado = true;
+  const arrastre = continuar ? espera.slice() : null;
   mes = m;
   document.querySelectorAll(".mes").forEach(b => b.classList.toggle("sel", +b.dataset.m === m));
   const r = rowMes(m);
   renderKpis(r); renderRooms(); renderDesks(); renderGhosts();
   visitors.forEach(v => v.g.remove()); visitors = [];
   espera = []; rechazados = []; renderEspera(); renderRechazados();
+  const proyMes = D.proyectos.filter(p => p.mes === m).reduce((t,p)=>t+p.horas,0);
+  sim[m] = {reales: proyMes, atendidas: proyMes, pendiente: 0, cerrado: false};
+  // pendientes del mes anterior: vuelven a pedir atención primero
+  if (arrastre && arrastre.length) arrastre.forEach((v, k) => reingresar(v.tipo, v.horas, v.look, v.sq, k));
+  else if (!continuar && r.arrastre_entrante > 1) {
+    // si se salta a un mes, se parte del pendiente que calcula el modelo
+    const prom = Math.max(4, (r.horas_req + r.horas_inc) / Math.max(1, r.req_esperados + r.inc_esperadas));
+    const n = Math.min(12, Math.max(1, Math.round(r.arrastre_entrante / prom)));
+    for (let k = 0; k < n; k++) reingresar(Math.random() < .55 ? "inc" : "req", r.arrastre_entrante / n, lookAleatorio(), null, k);
+  }
   // llegadas del mes: requerimientos e incidencias esperados + rechazados del dispatcher
   const nr = Math.round(r.req_esperados), ni = Math.round(r.inc_esperadas);
   const tasa = Math.min(.9, +(D.dispatcher?.tasa_rechazo || 0));
   const nx = Math.round((nr + ni) * tasa / (1 - tasa));
   plan = [...Array(nr).fill("req"), ...Array(ni).fill("inc"), ...Array(nx).fill("rech")].sort(() => Math.random() - .5);
   spawned = 0; elapsed = 0; robotBusy = 0;
+  renderTabla();
+}
+
+// Un pendiente del mes anterior sale de la sala de espera y vuelve donde el jefe
+function reingresar(tipo, horas, look, sq, k){
+  const silla = SILLAS_ESPERA[Math.min(k, SILLAS_ESPERA.length-1)];
+  const g = el("g", {}, layer);
+  person(g, 0, 0, tipo === "inc" ? "var(--inc)" : "var(--req)", look, "⏳");
+  const bubble = el("g", {opacity:0}, g);
+  const nombres = Object.keys(DESKS);
+  if (!nombres.length) return;
+  if (!sq || !nombres.some(n => DESKS[n].sq === sq)) sq = nombres.some(n => DESKS[n].sq === 1) && Math.random() < .55 ? 1 : (nombres.some(n => DESKS[n].sq === 2) ? 2 : 1);
+  const miembros = nombres.filter(n => DESKS[n].sq === sq);
+  const jefe = miembros.find(n => deskInfo[n].rol === "Jefe") || miembros[0];
+  const jd = DESKS[jefe];
+  const v = {g, bubble, tipo, clase: tipo, look, horas, sq, jefe, arrastre: true,
+             x: silla.x, y: silla.y, i: 0, waitUntil: performance.now() + 300 * k, path: [{x:jd.x+44, y:jd.y+26, wait:600, accion:"jefe"}]};
+  g.setAttribute("transform", `translate(${v.x},${v.y})`);
+  visitors.push(v);
+}
+
+function celdas(fn){ return D.resumen.map(r => fn(r)).join(""); }
+function renderTabla(){
+  const cur = r => r.mes === mes ? " cur" : "";
+  const val = (v, cls = "") => `<div class="${cls}">${v}</div>`;
+  const filas = [
+    ['Horas proyectadas<small>modelo, incluye colchón</small>', r => val(fmt(r.demanda_total_plan), cur(r))],
+    ['Horas reales<small>simulación: proyectos + pedidos que llegaron</small>', r => sim[r.mes] ? val(fmt(sim[r.mes].reales), cur(r)) : val("—", "na" + cur(r))],
+    ['Real vs proyectado', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const d = sim[r.mes].reales - r.demanda_total_plan; return val((d>0?"+":"") + fmt(d), (d>0?"neg":"pos") + cur(r)); }],
+    ['Pendiente que pasa al mes siguiente<small>simulación · gris = modelo</small>', r => {
+        if (sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)) { const p = sim[r.mes].cerrado ? sim[r.mes].pendiente : espera.reduce((t,v)=>t+v.horas,0); return val(p ? fmt(p) : "–", (p ? "neg" : "") + cur(r)); }
+        return val(r.pendiente_cierre ? fmt(r.pendiente_cierre) : "–", "na" + cur(r)); }],
+    ['Terceros necesarios<small>cubren el exceso sobre la capacidad del equipo</small>', r => val(r.terceros ? "+" + r.terceros : "–", (r.terceros ? "neg" : "") + cur(r))],
+  ];
+  document.getElementById("tabla").innerHTML = filas.map(([lbl, fn], i) =>
+    `<div class="lbl${i===filas.length-1?" last":""}">${lbl}</div>` + D.resumen.map(r => fn(r).replace('class="', i===filas.length-1 ? 'class="last ' : 'class="')).join("")).join("");
 }
 
 // ---------- Visitantes ----------
@@ -378,7 +482,7 @@ function burbuja(g, msg, borde){
 
 function spawn(clase){
   const marca = rnd(MARCAS);
-  const look = {mujer: Math.random() < .5, pelo: rnd(PELO), piel: rnd(PIEL)};
+  const look = lookAleatorio();
   const g = el("g", {}, layer);
   let tipo = clase === "inc" ? "inc" : "req", motivo = null, msg;
   if (clase === "rech") {
@@ -396,6 +500,7 @@ function spawn(clase){
     const tKey = tipo === "inc" ? "incidencia" : "requerimiento";
     v.nivel = sortear(D.mezcla[tKey]);
     v.horas = D.horas_pedido[tKey][v.nivel];
+    if (sim[mes]) { sim[mes].reales += v.horas; renderTabla(); }
   }
   v.path.push({x:ROBOT.x, y:ROBOT.y+60, wait:1500, say:true, accion:"robot"});
   g.setAttribute("transform", `translate(${v.x},${v.y})`);
@@ -445,6 +550,7 @@ function entregar(v){
   const p = DESKS[v.asignado];
   if (k < 8) el("rect", {x:p.x+30, y:p.y-30 - k*4, width:16, height:10, rx:2, fill: v.tipo==="inc" ? "#f6c6c1" : "#c9dbf6", stroke: v.tipo==="inc" ? "#e0453a" : "#2f6fd6", "stroke-width":.8}, d.pile);
   pintarDisponible(v.asignado);
+  if (sim[mes]) sim[mes].atendidas += v.horas;
   // "-30 h" flotando sobre el escritorio
   const t = txt(p.x, p.y-44, "−" + fmt(v.horas) + " h", {"text-anchor":"middle", "font-size":13, "font-weight":700, fill: v.tipo==="inc" ? "var(--inc)" : "var(--req)"}, d.fx);
   let y = 0; const iv = setInterval(() => { y -= 1; t.setAttribute("transform", `translate(0,${y})`); t.setAttribute("opacity", 1 + y/30); if (y < -30) { clearInterval(iv); t.remove(); } }, 40);
@@ -456,7 +562,7 @@ function tick(now){
   if (playing && D) {
     elapsed += Math.min(100, raw) * speed;
     while (spawned < plan.length && elapsed > (spawned + .5) / plan.length * MONTH_MS * .8) spawn(plan[spawned++]);
-    if (elapsed > MONTH_MS && visitors.length === 0) { elapsed = -2500; setTimeout(() => setMes(mes % 12 + 1), 10); }
+    if (elapsed > MONTH_MS && visitors.length === 0) { elapsed = -2500; setTimeout(() => mes === 12 ? (sim = {}, setMes(1)) : setMes(mes + 1, true), 10); }
   }
   for (const v of visitors) {
     if (!playing) break;
@@ -482,7 +588,7 @@ function tick(now){
         accionRobot(v);
       } else if (tgt.accion === "jefe") { v.bubble.setAttribute("opacity", 0); v.waitUntil = now + tgt.wait / speed; accionJefe(v); }
       else if (tgt.accion === "entregar") { v.waitUntil = now + tgt.wait / speed; entregar(v); }
-      else if (tgt.accion === "sentar_espera") { espera.push(v); v.done = true; renderEspera(); }
+      else if (tgt.accion === "sentar_espera") { espera.push(v); v.done = true; renderEspera(); renderTabla(); }
       else if (tgt.accion === "sentar_rech") { rechazados.push(v); v.done = true; renderRechazados(); }
     } else {
       v.x += dx / dist * step; v.y += dy / dist * step;
@@ -495,6 +601,7 @@ function tick(now){
 }
 
 document.getElementById("play").onclick = e => { playing = !playing; e.target.textContent = playing ? "⏸ Pausa" : "▶ Play"; };
+document.getElementById("reiniciar").onclick = () => { sim = {}; espera = []; setMes(1); };
 document.getElementById("vel").onclick = e => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; e.target.textContent = "Velocidad ×" + speed; };
 
 calcular().then(d => {

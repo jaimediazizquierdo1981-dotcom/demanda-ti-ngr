@@ -342,6 +342,23 @@ def ejecutar(cfg: dict | None = None, data_dir: Path = DATA) -> dict:
         return MESES[k % 12] + (f" {c['anio_plan'] - 1}" if k < 0 else "")
 
     res["alertar_en"] = [alerta(m, n) for m, n in zip(res["mes"], res["personas_adicionales"])]
+
+    # Arrastre: lo que no se resuelve en un mes pasa al siguiente (sin terceros)
+    arrastrar = c["criterios"].get("arrastre_pendientes", True)
+    entrante, pend = [], []
+    acum = 0.0
+    for dem, cap_m in zip(res["demanda_total_plan"], res["horas_netas"]):
+        entrante.append(acum)
+        resto = max(0.0, dem + acum - cap_m)
+        pend.append(resto)
+        acum = resto if arrastrar else 0.0
+    res["arrastre_entrante"] = entrante
+    res["pendiente_cierre"] = pend
+    # Terceros: cubren cada mes lo que excede la capacidad del equipo, así no se acumula pendiente
+    h3 = float(c["capacidad"].get("horas_mes_tercero", 160)) or 160.0
+    res["exceso_horas"] = np.maximum(0, res["demanda_total_plan"] - res["horas_netas"])
+    res["exceso_horas"] = np.where(res["exceso_horas"] > tol, res["exceso_horas"], 0)
+    res["terceros"] = np.ceil(res["exceso_horas"] / h3).astype(int)
     res.insert(1, "mes_nombre", [MESES[m - 1] for m in res["mes"]])
     res = res.replace([np.inf, -np.inf], 0)
     return {"resumen": res, "capacidad_persona": cap, "proyectos": proy, "pronostico": prono,
