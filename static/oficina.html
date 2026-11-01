@@ -519,10 +519,17 @@ function celdas(fn){ return D.resumen.map(r => fn(r)).join(""); }
 function renderTabla(){
   const cur = r => r.mes === mes ? " cur" : "";
   const val = (v, cls = "") => `<div class="${cls}">${v}</div>`;
+  const pendAnterior = m => m > 1 && sim[m-1] ? sim[m-1].pendiente : 0;
   const filas = [
-    ['Horas proyectadas<small>modelo, incluye colchón</small>', r => val(fmt(r.demanda_total_plan), cur(r))],
-    ['Horas reales<small>simulación: proyectos + pedidos que llegaron</small>', r => sim[r.mes] ? val(fmt(sim[r.mes].reales), cur(r)) : val("—", "na" + cur(r))],
-    ['Real vs proyectado', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const d = sim[r.mes].reales - r.demanda_total_plan; return val((d>0?"+":"") + fmt(d), (d>0?"neg":"pos") + cur(r)); }],
+    ['Demanda proyectada<small>modelo, incluye colchón</small>', r => val(fmt(r.demanda_total_plan), cur(r))],
+    ['Demanda real<small>simulación: proyectos + pedidos que llegaron</small>', r => sim[r.mes] ? val(fmt(sim[r.mes].reales), cur(r)) : val("—", "na" + cur(r))],
+    ['Desvío de la demanda<small>real − proyectada (+ = llegó más de lo previsto)</small>', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const d = sim[r.mes].reales - r.demanda_total_plan; return val((d>0?"+":"") + fmt(d), (d>0?"neg":"pos") + cur(r)); }],
+    ['Capacidad neta del equipo<small>horas disponibles en el mes</small>', r => val(fmt(r.horas_netas), cur(r))],
+    ['Pendiente que viene del mes anterior', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const p = pendAnterior(r.mes); return val(p ? fmt(p) : "–", cur(r)); }],
+    ['Saldo del mes<small>capacidad − demanda real − pendiente anterior</small>', r => {
+        if (!sim[r.mes] || (!sim[r.mes].cerrado && r.mes === mes)) return val("—", "na" + cur(r));
+        const sdo = r.horas_netas - sim[r.mes].reales - pendAnterior(r.mes);
+        return val((sdo>0?"+":"") + fmt(sdo), (sdo<0?"neg":"pos") + cur(r)); }],
     ['Pendiente que pasa al mes siguiente<small>simulación · gris = modelo</small>', r => {
         if (sim[r.mes] && (sim[r.mes].cerrado || r.mes === mes)) { const p = sim[r.mes].cerrado ? sim[r.mes].pendiente : espera.reduce((t,v)=>t+v.horas,0); return val(p ? fmt(p) : "–", (p ? "neg" : "") + cur(r)); }
         return val(r.pendiente_cierre ? fmt(r.pendiente_cierre) : "–", "na" + cur(r)); }],
