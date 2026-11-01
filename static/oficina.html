@@ -309,23 +309,41 @@ function renderKpis(r){
 function renderRooms(){
   roomLayer.innerHTML = "";
   const horasPersona = rowMes(mes).horas_netas / Math.max(1, D.n_personas);
-  [["Tecnologia", 30], ["Transformacional", 350]].forEach(([tipo, y0]) => {
-    const ps = D.proyectos.filter(p => p.mes === mes && p.tipo === tipo).sort((a,b)=>b.horas-a.horas);
-    const total = ps.reduce((s,p)=>s+p.horas,0);
+  const INI = ["E","F","M","A","M","J","J","A","S","O","N","D"];
+  [["Tecnologia", 30, 310], ["Transformacional", 350, 330]].forEach(([tipo, y0, alto]) => {
+    const color = tipo === "Tecnologia" ? "#2f6fd6" : "#7c4dd6";
+    // todos los proyectos del año de este tipo (con horas del equipo de data)
+    const codigos = [...new Set(D.proyectos.filter(p => p.tipo === tipo).map(p => p.codigo))];
+    const delMes = D.proyectos.filter(p => p.mes === mes && p.tipo === tipo);
+    const total = delMes.reduce((s,p)=>s+p.horas,0);
     const fte = horasPersona ? total / horasPersona : 0;
     txt(1232, y0+24, fmt(total) + " h", {"text-anchor":"end", "font-size":15, "font-weight":700}, roomLayer);
-    txt(1232, y0+40, "≈ " + fte.toFixed(1) + " personas", {"text-anchor":"end", "font-size":11, fill:"var(--muted)"}, roomLayer);
-    if (!ps.length) { txt(1025, y0+150, "Sin proyectos con data este mes", {"text-anchor":"middle", "font-size":12, fill:"var(--muted)"}, roomLayer); return; }
+    txt(1232, y0+40, "este mes · ≈ " + fte.toFixed(1) + " personas", {"text-anchor":"end", "font-size":11, fill:"var(--muted)"}, roomLayer);
+    if (!codigos.length) { txt(1025, y0+150, "Sin proyectos con data", {"text-anchor":"middle", "font-size":12, fill:"var(--muted)"}, roomLayer); return; }
     const maxH = Math.max(...D.proyectos.map(p=>p.horas));
-    ps.slice(0,5).forEach((p, i) => {
-      const y = y0 + 58 + i*50;
-      el("rect", {x:818, y, width:414, height:42, rx:8, fill:"#fff", stroke:"#cfe0ee"}, roomLayer);
-      txt(830, y+17, p.codigo + " · " + p.proyecto, {"font-size":12, "font-weight":600}, roomLayer);
-      el("rect", {x:830, y:y+25, width:300, height:8, rx:4, fill:"#e7eef5"}, roomLayer);
-      el("rect", {x:830, y:y+25, width:Math.max(4, 300*p.horas/maxH), height:8, rx:4, fill: tipo==="Tecnologia" ? "#2f6fd6" : "#7c4dd6"}, roomLayer);
-      txt(1220, y+33, fmt(p.horas) + " h", {"text-anchor":"end", "font-size":11.5, fill:"var(--muted)"}, roomLayer);
-      const n = Math.min(5, Math.max(1, Math.round(p.horas/40)));
-      for (let k=0;k<n;k++) el("circle", {cx:1150 - n*6 + k*12, cy:y+12, r:4.5, fill: tipo==="Tecnologia" ? "#2f6fd6" : "#7c4dd6", opacity:.75}, roomLayer);
+    const paso = Math.min(62, (alto - 56) / codigos.length);
+    codigos.forEach((cod, i) => {
+      const filas = D.proyectos.filter(p => p.codigo === cod);
+      const nombre = filas[0].proyecto;
+      const activos = new Set(filas.map(p => p.mes));
+      const hMes = (filas.find(p => p.mes === mes) || {}).horas || 0;
+      const y = y0 + 52 + i * paso;
+      const enCurso = hMes > 0;
+      el("rect", {x:818, y, width:414, height:paso-6, rx:8, fill: enCurso ? "#fff" : "#f7f9fb", stroke: enCurso ? "#cfe0ee" : "#e2e8ee"}, roomLayer);
+      txt(830, y+16, cod + " · " + nombre, {"font-size":12, "font-weight":600, fill: enCurso ? "var(--ink)" : "#8a94a0"}, roomLayer);
+      txt(1220, y+16, enCurso ? fmt(hMes) + " h" : "sin horas este mes", {"text-anchor":"end", "font-size":11, fill:"var(--muted)"}, roomLayer);
+      el("rect", {x:830, y:y+22, width:200, height:6, rx:3, fill:"#e7eef5"}, roomLayer);
+      if (enCurso) el("rect", {x:830, y:y+22, width:Math.max(3, 200*hMes/maxH), height:6, rx:3, fill:color}, roomLayer);
+      // casillas de los 12 meses: marcadas las que ya se atendieron hasta el mes actual
+      for (let k = 1; k <= 12; k++) {
+        const cx = 830 + (k-1) * 33, cy = y + 33;
+        const activo = activos.has(k), hecho = activo && k <= mes;
+        el("rect", {x:cx, y:cy, width:28, height:14, rx:3,
+          fill: hecho ? color : "#fff", "fill-opacity": hecho ? (k === mes ? 1 : .55) : 1,
+          stroke: activo ? color : "#e1e5ea", "stroke-width": k === mes ? 2 : 1}, roomLayer);
+        txt(cx+14, cy+10.5, INI[k-1], {"text-anchor":"middle", "font-size":9, "font-weight":600,
+          fill: hecho ? "#fff" : activo ? color : "#c3c9d0"}, roomLayer);
+      }
     });
   });
 }
