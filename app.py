@@ -28,7 +28,7 @@ APP_USER = os.environ.get("APP_USER", "")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 SECRETO = os.environ.get("SESSION_SECRET", "") or secrets.token_hex(32)
 DURACION_SESION = 8 * 3600
-LIBRES = {"/login", "/api/auth/login", "/api/auth/captcha", "/static/comun.css", "/static/favicon.svg", "/favicon.ico"}
+LIBRES = {"/login", "/api/auth/login", "/api/auth/captcha", "/static/comun.css", "/static/favicon.svg", "/static/favicon.png", "/static/favicon.ico", "/favicon.ico"}
 
 
 def _firmar(texto: str) -> str:
@@ -113,7 +113,7 @@ def api_auth_login(request: Request, body: dict = Body(...)):
 
 @app.get("/favicon.ico")
 def favicon():
-    return FileResponse(STATIC / "favicon.svg", media_type="image/svg+xml")
+    return FileResponse(STATIC / "favicon.ico", media_type="image/x-icon")
 
 
 @app.get("/logout")
