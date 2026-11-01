@@ -54,8 +54,7 @@ document.getElementById("f").onsubmit = async e => {
     body: JSON.stringify({usuario: document.getElementById("u").value.trim(), password: document.getElementById("p").value,
                           captcha: document.getElementById("c").value})});
   if (r.ok) {
-    const next = new URLSearchParams(location.search).get("next") || "/";
-    location.href = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    location.href = "/";   // después de ingresar siempre se abre el Resumen
     return;
   }
   const d = await r.json().catch(() => ({}));
