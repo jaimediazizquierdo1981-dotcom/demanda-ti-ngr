@@ -37,11 +37,22 @@
   .w-l{min-width:240px}.w-xs{width:70px}.w-s{width:95px}.w-m{width:140px}
   .btn{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
   .btn:hover{border-color:#999}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
   .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
   .btn.del{border:none;background:none;color:#b55;font-size:16px;padding:2px 6px}
   .add{margin-top:10px}
   .lvl{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   .lvl h3{font-size:13.5px;margin:0 0 6px}
+  .cargas{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+  .carga{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fcfbf8}
+  .carga h3{margin:0 0 2px;font-size:14px} .carga .est{font-size:11.5px;color:var(--muted);margin-bottom:8px}
+  .carga .fila{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+  .carga input[type=file]{font-size:12px;max-width:100%}
+  .carga .res{margin-top:8px;font-size:12px}
+  .carga .res ul{margin:4px 0 0;padding-left:18px;color:var(--bad);max-height:120px;overflow:auto}
+  .carga .ok{color:var(--ok);font-weight:600} .carga .mal{color:var(--bad);font-weight:600}
+  .acceso{display:flex;gap:6px;align-items:center}
+  .acceso input{width:150px}
   .bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 24px;display:flex;align-items:center;gap:12px;z-index:6;box-shadow:0 -4px 16px rgba(0,0,0,.05)}
   .bar .res{flex:1;display:flex;gap:18px;flex-wrap:wrap;font-size:13px}
   .bar .res b{font-size:15px}
@@ -67,6 +78,8 @@
     <a href="#sec-pr">7. Proyectos</a>
     <a href="#sec-vac">8. Vacaciones</a>
     <a href="#sec-fer">9. Feriados</a>
+    <small>Datos</small>
+    <a href="#sec-carga">10. Cargar datos</a>
   </aside>
 
   <div id="main">
@@ -130,12 +143,20 @@
       <table id="t-feriados"></table>
       <button class="btn add" data-add="feriados">+ Agregar feriado</button>
     </section>
+    <section class="card" id="sec-carga">
+      <h2><span class="n">10</span>Cargar datos</h2>
+      <p class="d">Sube tus archivos en Excel o CSV. Descarga la plantilla para ver el formato, valida y, si todo está bien, confirma la carga. Lo cargado queda guardado para todo el equipo.</p>
+      <div id="estadoDb" class="msg" style="margin-bottom:10px"></div>
+      <div class="cargas" id="cargas"></div>
+    </section>
   </div>
 </div>
 
 <div class="bar">
   <button class="btn pri" id="aplicar">Aplicar y recalcular</button>
-  <button class="btn" id="restaurar">Restaurar valores base</button>
+  <button class="btn" id="restaurar">Descartar mis cambios</button>
+  <button class="btn" id="guardarTodos" title="Guarda esta configuración en la base de datos para todo el equipo">Guardar para todo el equipo</button>
+  <span class="acceso" id="acceso"></span>
   <div class="res" id="res"><span class="msg">Cambia lo que necesites y presiona "Aplicar y recalcular".</span></div>
   <a class="btn" href="/">Ver Resumen</a>
   <a class="btn" href="/oficina">Ver Oficina</a>
@@ -143,6 +164,81 @@
 
 <script>
 let CFG = null;
+const TOKEN_KEY = "demanda_ti_ngr_token";
+let ESTADO = {};
+function token(){ try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } }
+function conToken(h = {}){ const t = token(); return t ? {...h, "X-Token": t} : h; }
+function renderAcceso(){
+  const a = document.getElementById("acceso");
+  if (!ESTADO.requiere_clave) { a.innerHTML = ""; return; }
+  a.innerHTML = token() ? '<span class="msg">🔓 Con acceso</span> <button class="btn" id="salir">Salir</button>'
+    : '<input type="password" id="clave" placeholder="Contraseña"> <button class="btn" id="entrar">🔒 Ingresar</button>';
+  const e = document.getElementById("entrar"), s2 = document.getElementById("salir");
+  if (e) e.onclick = async () => {
+    const r = await fetch("/api/login", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({password: document.getElementById("clave").value})});
+    if (r.ok) { localStorage.setItem(TOKEN_KEY, (await r.json()).token); renderAcceso(); }
+    else document.getElementById("res").innerHTML = '<span class="msg" style="color:var(--bad)">Contraseña incorrecta.</span>';
+  };
+  if (s2) s2.onclick = () => { localStorage.removeItem(TOKEN_KEY); renderAcceso(); };
+}
+
+// ---------- Cargas ----------
+const CARGAS = [
+  ["proyectos_transformacionales", "Plan de proyectos transformacionales"],
+  ["proyectos_ti", "Plan de proyectos tecnológicos"],
+  ["historico_requerimientos", "Histórico de requerimientos"],
+  ["historico_incidencias", "Histórico de incidencias"],
+  ["equipo", "Equipo"],
+  ["vacaciones", "Vacaciones"],
+  ["feriados", "Feriados"],
+  ["horas_reales", "Horas reales ejecutadas por mes"],
+];
+function fechaCorta(iso){ try { return new Date(iso).toLocaleString("es-PE", {dateStyle:"medium", timeStyle:"short"}); } catch(e) { return iso; } }
+function renderCargas(){
+  const ds = ESTADO.datasets || {};
+  document.getElementById("estadoDb").innerHTML = ESTADO.base_de_datos
+    ? "Base de datos conectada." + (ESTADO.config ? " Configuración compartida guardada el " + fechaCorta(ESTADO.config) + "." : " Aún se usan los valores iniciales.")
+    : '<span style="color:var(--bad)">No hay base de datos conectada: las cargas no se pueden guardar.</span>';
+  document.getElementById("cargas").innerHTML = CARGAS.map(([t, titulo]) => `
+    <div class="carga" data-tipo="${t}">
+      <h3>${titulo}</h3>
+      <div class="est">${ds[t] ? "Cargado: " + ds[t].filas + " filas · " + fechaCorta(ds[t].actualizado) : (t.startsWith("historico_") ? "Sin carga: se usa el histórico ficticio" : t === "horas_reales" ? "Sin carga todavía" : "Se edita también en las tablas de arriba")}</div>
+      <div class="fila"><a class="btn" href="/api/plantilla/${t}">⬇ Plantilla</a>
+        <select class="modo"><option value="reemplazar">Reemplazar</option><option value="agregar">Agregar</option></select></div>
+      <div class="fila"><input type="file" class="arch" accept=".xlsx,.xls,.csv"></div>
+      <div class="fila"><button class="btn validar">Validar</button><button class="btn pri confirmar" disabled>Confirmar carga</button></div>
+      <div class="res"></div>
+    </div>`).join("");
+  document.querySelectorAll(".carga").forEach(c => {
+    const t = c.dataset.tipo, res = c.querySelector(".res"), conf = c.querySelector(".confirmar");
+    const enviar = async (confirmar) => {
+      const f = c.querySelector(".arch").files[0];
+      if (!f) { res.innerHTML = '<span class="mal">Elige un archivo.</span>'; return null; }
+      const fd = new FormData(); fd.append("archivo", f);
+      res.innerHTML = '<span class="msg">' + (confirmar ? "Guardando…" : "Validando…") + "</span>";
+      const r = await fetch(`/api/cargar/${t}?modo=${c.querySelector(".modo").value}&confirmar=${confirmar}`, {method:"POST", body: fd, headers: conToken()});
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { res.innerHTML = '<span class="mal">' + (d.detail || "Error " + r.status) + "</span>"; return null; }
+      return d;
+    };
+    c.querySelector(".validar").onclick = async () => {
+      const d = await enviar(false); if (!d) return;
+      res.innerHTML = `<span class="${d.errores.length ? "mal" : "ok"}">${d.filas_validas} de ${d.filas_leidas} filas válidas</span>` +
+        (d.errores.length ? "<ul>" + d.errores.map(e => "<li>" + e + "</li>").join("") + "</ul>" : "") +
+        (d.filas_validas ? '<div class="msg">Si confirmas, se cargan solo las filas válidas.</div>' : "");
+      conf.disabled = !d.filas_validas;
+    };
+    conf.onclick = async () => {
+      const d = await enviar(true); if (!d) return;
+      res.innerHTML = `<span class="ok">✓ Cargadas ${d.filas_validas} filas.</span>`;
+      conf.disabled = true;
+      ESTADO = await (await fetch("/api/estado")).json();
+      borrarCfg();
+      CFG = await (await fetch("/api/config/base")).json();
+      renderTodo(); renderCargas(); aplicar(false);
+    };
+  });
+}
 
 const CRITERIOS = [
   ["feriados", "Feriados", "Descuenta los feriados nacionales de los días útiles."],
@@ -352,6 +448,19 @@ async function aplicar(guardar = true){
 }
 
 document.getElementById("aplicar").onclick = aplicar;
+document.getElementById("guardarTodos").onclick = async () => {
+  const res = document.getElementById("res");
+  const r = await fetch("/api/config/guardar", {method:"POST", headers: conToken({"Content-Type":"application/json"}), body: JSON.stringify(CFG)});
+  if (r.ok) {
+    borrarCfg();
+    res.innerHTML = '<span class="msg" style="color:var(--ok)">✓ Guardado para todo el equipo. Todos verán esta configuración.</span>';
+    document.querySelector(".chip-cfg").outerHTML = '<span class="chip-cfg base">Valores compartidos</span>';
+    ESTADO = await (await fetch("/api/estado")).json(); renderCargas();
+  } else {
+    const d = await r.json().catch(() => ({}));
+    res.innerHTML = '<span class="msg" style="color:var(--bad)">' + (d.detail || "No se pudo guardar.") + "</span>";
+  }
+};
 document.getElementById("restaurar").onclick = async () => {
   if (!confirmarRestaurar()) return;
   borrarCfg();
@@ -362,9 +471,9 @@ document.getElementById("restaurar").onclick = async () => {
 function confirmarRestaurar(){
   // confirmación en la misma barra, sin ventanas emergentes
   const b = document.getElementById("restaurar");
-  if (b.dataset.ok) { delete b.dataset.ok; b.textContent = "Restaurar valores base"; return true; }
+  if (b.dataset.ok) { delete b.dataset.ok; b.textContent = "Descartar mis cambios"; return true; }
   b.dataset.ok = 1; b.textContent = "¿Seguro? Clic otra vez";
-  setTimeout(() => { delete b.dataset.ok; b.textContent = "Restaurar valores base"; }, 4000);
+  setTimeout(() => { delete b.dataset.ok; b.textContent = "Descartar mis cambios"; }, 4000);
   return false;
 }
 
@@ -374,6 +483,8 @@ function confirmarRestaurar(){
   CFG = guardada ? {...base, ...guardada} : base;
   renderTodo();
   aplicar(false);
+  ESTADO = await (await fetch("/api/estado")).json();
+  renderAcceso(); renderCargas();
 })();
 </script>
 </body>

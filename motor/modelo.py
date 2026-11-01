@@ -33,17 +33,28 @@ MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "
 
 # ---------- Configuración ----------
 def _historico(data_dir: Path) -> pd.DataFrame:
-    hist = pd.concat(
-        [pd.read_csv(data_dir / "historico_requerimientos.csv"),
-         pd.read_csv(data_dir / "historico_incidencias.csv")],
-        ignore_index=True,
-    )
+    from motor import db
+    partes = []
+    for nombre, tipo in [("historico_requerimientos", "requerimiento"), ("historico_incidencias", "incidencia")]:
+        filas = db.leer_dataset(nombre)   # si se cargó un histórico, manda sobre el archivo
+        df = pd.DataFrame(filas) if filas else pd.read_csv(data_dir / f"{nombre}.csv")
+        df["tipo"] = tipo
+        partes.append(df)
+    hist = pd.concat(partes, ignore_index=True)
     hist["fecha"] = pd.to_datetime(hist["fecha"])
     return hist
 
 
 def config_base(data_dir: Path = DATA) -> dict:
-    """Configuración completa con los valores de /data (lo que muestra la pestaña Parámetros)."""
+    """Configuración compartida: la guardada en la base de datos o, si no hay, la de /data."""
+    from motor import db
+    base = config_archivos(data_dir)
+    guardada = db.leer_config()
+    return _merge(base, guardada) if guardada else base
+
+
+def config_archivos(data_dir: Path = DATA) -> dict:
+    """Configuración completa con los valores de /data."""
     p = json.loads((data_dir / "parametros.json").read_text(encoding="utf-8"))
     eq = pd.read_csv(data_dir / "equipo.csv")
     eq["incluir"] = True
@@ -209,7 +220,8 @@ def _kalman(s: pd.Series, h: int) -> np.ndarray:
 
 def _base_pronostico(hist: pd.DataFrame, anio: int) -> pd.DataFrame:
     """Totales mensuales por tipo con ambos modelos. Es lo más costoso; se guarda en caché."""
-    key = (anio, len(hist), str(hist["fecha"].max()))
+    key = (anio, len(hist), str(hist["fecha"].max()), str(hist["fecha"].min()),
+           tuple(hist["tipo"].value_counts().sort_index().items()))
     if key in _CACHE_PRONO:
         return _CACHE_PRONO[key]
     ultimo = hist["fecha"].max().to_period("M")

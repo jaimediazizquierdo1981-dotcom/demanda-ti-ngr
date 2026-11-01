@@ -20,7 +20,7 @@ async function calcular(cfg) {
 
 function nav(activa) {
   const tabs = [["/", "Resumen"], ["/oficina", "Oficina"], ["/parametros", "Parámetros"]];
-  const personal = leerCfg() ? '<span class="chip-cfg" title="Estás viendo resultados con parámetros modificados">Parámetros modificados</span>' : '<span class="chip-cfg base">Valores base</span>';
+  const personal = leerCfg() ? '<span class="chip-cfg" title="Estás viendo resultados con parámetros modificados">Parámetros modificados</span>' : '<span class="chip-cfg base">Valores compartidos</span>';
   const html = `<nav class="tabs"><div class="brand">Demanda TI · Data NGR 2027</div>
     <div class="tablist">${tabs.map(([h, t]) => `<a href="${h}" class="${t === activa ? "on" : ""}">${t}</a>`).join("")}</div>${personal}</nav>`;
   document.body.insertAdjacentHTML("afterbegin", html);

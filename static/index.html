@@ -38,7 +38,7 @@
 </main>
 <script>
 const M = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-calcular().then(d => {
+Promise.all([calcular(), fetch("/api/horas_reales").then(r => r.json()).catch(() => [])]).then(([d, reales]) => {
   const R = d.resumen;
   const fila = (lbl, f, cls = "", fmt = fmtH, total = true) => {
     const vals = R.map(f);
@@ -62,6 +62,7 @@ calcular().then(d => {
     `<tr><td>Utilización</td>${R.map(r=>`<td>${util(r.utilizacion)}</td>`).join("")}<td>${util(dem/cap)}</td></tr>` +
     fila("Pendiente que viene del mes anterior", r => r.arrastre_entrante, "", fmtH, false) +
     fila("Pendiente al cierre (pasa al mes siguiente, sin terceros)", r => r.pendiente_cierre, "", fmtH, false) +
+    (reales.length ? fila("Horas reales ejecutadas (cargadas)", r => reales.filter(x => +x.mes === r.mes).reduce((t,x)=>t+(+x.horas||0),0), "tot sep") : "") +
     `<tr class="tot sep"><td>Terceros para cubrir el exceso</td>${R.map(r=>`<td class="${r.terceros?"neg":""}">${r.terceros||"–"}</td>`).join("")}<td></td></tr>` +
     `<tr class="tot"><td>Personas adicionales (contratación)</td>${R.map(r=>`<td class="${r.personas_adicionales?"neg":""}">${r.personas_adicionales||"–"}</td>`).join("")}<td></td></tr>` +
     `<tr><td>Alertar en</td>${R.map(r=>`<td>${r.alertar_en||""}</td>`).join("")}<td></td></tr>` +
