@@ -58,7 +58,7 @@ calcular().then(d => {
     fila("Capacidad neta", r => r.horas_netas, "tot") +
     fila("Brecha", r => r.brecha_horas, "tot brecha", v => (v>0?"+":"") + fmtH(v)) +
     `<tr><td>Utilización</td>${R.map(r=>`<td>${util(r.utilizacion)}</td>`).join("")}<td>${util(dem/cap)}</td></tr>` +
-    fila("Pendiente que viene del mes anterior", r => r.arrastre_entrante) +
+    fila("Pendiente que viene del mes anterior", r => r.arrastre_entrante, "", fmtH, false) +
     fila("Pendiente al cierre (pasa al mes siguiente, sin terceros)", r => r.pendiente_cierre, "", fmtH, false) +
     `<tr class="tot sep"><td>Terceros para cubrir el exceso</td>${R.map(r=>`<td class="${r.terceros?"neg":""}">${r.terceros||"–"}</td>`).join("")}<td></td></tr>` +
     `<tr class="tot"><td>Personas adicionales (contratación)</td>${R.map(r=>`<td class="${r.personas_adicionales?"neg":""}">${r.personas_adicionales||"–"}</td>`).join("")}<td></td></tr>` +
