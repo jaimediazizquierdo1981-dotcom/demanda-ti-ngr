@@ -55,7 +55,7 @@ calcular().then(d => {
     fila("Incidencias", r => r.horas_inc) +
     fila("Colchón de variabilidad (req. + inc.)", r => r.colchon) +
     fila("Demanda total", r => r.demanda_total_plan, "tot sep") +
-    fila("Capacidad neta", r => r.horas_netas, "tot") +
+    fila("Horas para atender (sin vacaciones, descansos ni gestión)", r => r.horas_netas, "tot") +
     fila("Brecha", r => r.brecha_horas, "tot brecha", v => (v>0?"+":"") + fmtH(v)) +
     `<tr><td>Utilización</td>${R.map(r=>`<td>${util(r.utilizacion)}</td>`).join("")}<td>${util(dem/cap)}</td></tr>` +
     fila("Pendiente que viene del mes anterior", r => r.arrastre_entrante, "", fmtH, false) +
@@ -67,7 +67,7 @@ calcular().then(d => {
   const brecha = cap - dem;
   const pico = Math.max(...R.map(r=>r.personas_adicionales));
   const def = R.filter(r=>r.brecha_horas<0).map(r=>r.mes_nombre);
-  const k = [["Personas en el equipo", d.n_personas, ""],["Capacidad neta año", fmtH(cap)+" h",""],["Demanda año", fmtH(dem)+" h",""],
+  const k = [["Personas en el equipo", d.n_personas, ""],["Horas para atender año", fmtH(cap)+" h",""],["Demanda año", fmtH(dem)+" h",""],
              ["Brecha año", (brecha>=0?"+":"")+fmtH(brecha)+" h", brecha<0?"bad":"ok"],["Utilización año", fmtPct(dem/cap), dem>cap?"bad":"ok"],
              ["Pico por contratar", pico?("+"+pico):"—", pico?"bad":"ok"],
              ["Pendiente a fin de año (sin terceros)", fmtH(R[11].pendiente_cierre)+" h", R[11].pendiente_cierre>0?"bad":"ok"],

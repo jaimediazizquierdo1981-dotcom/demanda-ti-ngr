@@ -290,7 +290,7 @@ function rowMes(m){ return D.resumen.find(r => r.mes === m); }
 function renderKpis(r){
   const k = [
     ["Mes", r.mes_nombre + " 2027", ""],
-    ["Capacidad neta", fmt(r.horas_netas) + " h", ""],
+    ["Horas para atender", fmt(r.horas_netas) + " h", ""],
     ["Demanda (plan)", fmt(r.demanda_total_plan) + " h", ""],
     ["Brecha", (r.brecha_horas>=0?"+":"") + fmt(r.brecha_horas) + " h", r.brecha_horas<0?"bad":"ok"],
     ["Utilización", pct(r.utilizacion), r.utilizacion>1?"bad":r.utilizacion>.85?"warn":"ok"],
@@ -524,9 +524,9 @@ function renderTabla(){
     ['Demanda proyectada<small>modelo</small>', r => val(fmt(r.demanda_total_plan), cur(r))],
     ['Demanda real<small>simulación: proyectos + pedidos que llegaron</small>', r => sim[r.mes] ? val(fmt(sim[r.mes].reales), cur(r)) : val("—", "na" + cur(r))],
     ['Desvío de la demanda<small>real − proyectada (+ = llegó más de lo previsto)</small>', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const d = sim[r.mes].reales - r.demanda_total_plan; return val((d>0?"+":"") + fmt(d), (d>0?"neg":"pos") + cur(r)); }],
-    ['Capacidad neta del equipo<small>horas disponibles en el mes</small>', r => val(fmt(r.horas_netas), cur(r))],
+    ['Horas para atender<small>ya sin vacaciones, descansos ni gestión de jefes</small>', r => val(fmt(r.horas_netas), cur(r))],
     ['Pendiente que viene del mes anterior', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const p = pendAnterior(r.mes); return val(p ? fmt(p) : "–", cur(r)); }],
-    ['Saldo del mes<small>capacidad − demanda real − pendiente anterior</small>', r => {
+    ['Saldo del mes<small>horas para atender − demanda real − pendiente anterior</small>', r => {
         if (!sim[r.mes] || (!sim[r.mes].cerrado && r.mes === mes)) return val("—", "na" + cur(r));
         const sdo = r.horas_netas - sim[r.mes].reales - pendAnterior(r.mes);
         return val((sdo>0?"+":"") + fmt(sdo), (sdo<0?"neg":"pos") + cur(r)); }],
