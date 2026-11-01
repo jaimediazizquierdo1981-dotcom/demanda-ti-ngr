@@ -9,6 +9,14 @@ from motor.modelo import _horas_pedido, config_base, ejecutar
 
 STATIC = Path(__file__).resolve().parent / "static"
 app = FastAPI(title="Demanda TI NGR")
+
+
+@app.middleware("http")
+async def sin_cache(request, call_next):
+    # Que el navegador siempre pida la versión publicada más reciente
+    resp = await call_next(request)
+    resp.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return resp
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
