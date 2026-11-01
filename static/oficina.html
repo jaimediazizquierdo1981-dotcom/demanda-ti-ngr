@@ -345,7 +345,8 @@ function pintarDisponible(nombre){
   const ratio = d.netas > 0 ? Math.max(0, d.disponible) / d.netas : 0;
   d.bar.setAttribute("width", (90 * ratio).toFixed(1));
   d.bar.setAttribute("fill", ratio > .35 ? "var(--ok)" : ratio > .1 ? "var(--warn)" : "var(--bad)");
-  d.disp.textContent = "Disponibles: " + fmt(Math.max(0, d.disponible)) + " h";
+  const h = Math.max(0, d.disponible);
+  d.disp.textContent = "Disponibles: " + (h > 0 && h < 10 ? h.toFixed(1) : fmt(h)) + " h";
   d.disp.setAttribute("fill", ratio > .1 ? "var(--ink)" : "var(--bad)");
 }
 
@@ -532,29 +533,36 @@ function accionRobot(v){
 
 // El jefe asigna a quien tenga horas; si nadie en el squad tiene, va a la sala de espera
 // El jefe asigna: 1) alguien de su squad con horas completas, 2) apoyo del otro squad,
-// 3) avance parcial con quien tenga más horas libres (el saldo pasa al mes siguiente),
-// 4) si nadie tiene horas, a la sala de espera.
+// 3) si nadie tiene las horas completas, se reparte entre varias personas (avances parciales)
+//    hasta agotar las horas libres del equipo; 4) solo el saldo que nadie puede tomar va a la sala de espera.
 function accionJefe(v){
   const todos = Object.keys(DESKS);
   const orden = (a,b) => (deskInfo[a].rol==="Jefe") - (deskInfo[b].rol==="Jefe") || deskInfo[b].disponible - deskInfo[a].disponible;
   const propio = todos.filter(n => DESKS[n].sq === v.sq), otro = todos.filter(n => DESKS[n].sq !== v.sq);
-  let asignado = propio.filter(n => deskInfo[n].disponible >= v.horas).sort(orden)[0];
-  v.apoyo = false;
-  if (!asignado) { asignado = otro.filter(n => deskInfo[n].disponible >= v.horas).sort(orden)[0]; v.apoyo = !!asignado; }
-  let tramo = v.horas;
-  if (!asignado) {
-    const parcial = todos.filter(n => deskInfo[n].disponible >= 1)
-      .sort((a,b) => deskInfo[b].disponible - deskInfo[a].disponible || (DESKS[a].sq !== v.sq) - (DESKS[b].sq !== v.sq))[0];
-    if (parcial) { asignado = parcial; tramo = deskInfo[parcial].disponible; v.apoyo = DESKS[parcial].sq !== v.sq; }
+  let tramos = [];
+  const completo = propio.filter(n => deskInfo[n].disponible >= v.horas).sort(orden)[0]
+                || otro.filter(n => deskInfo[n].disponible >= v.horas).sort(orden)[0];
+  if (completo) tramos.push({n: completo, h: v.horas});
+  else {
+    let falta = v.horas;
+    const libres = todos.filter(n => deskInfo[n].disponible > 0.05)
+      .sort((a,b) => (DESKS[a].sq !== v.sq) - (DESKS[b].sq !== v.sq) || deskInfo[b].disponible - deskInfo[a].disponible);
+    for (const n of libres) {
+      if (falta <= 0.05) break;
+      const h = Math.min(falta, deskInfo[n].disponible);
+      tramos.push({n, h}); falta -= h;
+    }
   }
-  if (asignado) {
-    v.asignado = asignado; v.tramo = tramo; v.restante = v.horas - tramo;
-    deskInfo[asignado].disponible -= tramo;   // se reserva al asignar
-    const ad = DESKS[asignado];
-    v.path.push({x:ad.x-44, y:ad.y+26, wait:800, accion:"entregar"});
-    if (v.restante > 0.01) mandarAEspera(v);
-    else v.path.push({x:DOOR.x-20, y:DOOR.y+10, wait:0, accion:"salir"});
-  } else mandarAEspera(v);
+  tramos.forEach(t => { deskInfo[t.n].disponible -= t.h; });   // se reserva al asignar
+  const asignadas = tramos.reduce((x,t)=>x+t.h,0);
+  v.restante = Math.max(0, v.horas - asignadas);
+  tramos.forEach((t, i) => {
+    const ad = DESKS[t.n];
+    v.path.push({x:ad.x-44, y:ad.y+26, wait:700, accion:"entregar", n:t.n, h:t.h,
+                 apoyo: DESKS[t.n].sq !== v.sq, parcial: tramos.length > 1 || v.restante > 0.05});
+  });
+  if (v.restante > 0.05) mandarAEspera(v);
+  else v.path.push({x:DOOR.x-20, y:DOOR.y+10, wait:0, accion:"salir"});
 }
 function mandarAEspera(v){
   const k = espera.length + visitors.filter(x => x.destino === "espera").length;
@@ -563,17 +571,16 @@ function mandarAEspera(v){
   v.path.push({x:silla.x, y:silla.y, wait:0, accion:"sentar_espera"});
 }
 
-function entregar(v){
-  const d = deskInfo[v.asignado], k = d.tickets++;
-  const p = DESKS[v.asignado];
+function entregar(v, tgt){
+  const nombre = tgt.n, tramo = tgt.h;
+  const d = deskInfo[nombre], k = d.tickets++;
+  const p = DESKS[nombre];
   if (k < 8) el("rect", {x:p.x+30, y:p.y-30 - k*4, width:16, height:10, rx:2, fill: v.tipo==="inc" ? "#f6c6c1" : "#c9dbf6", stroke: v.tipo==="inc" ? "#e0453a" : "#2f6fd6", "stroke-width":.8}, d.pile);
-  pintarDisponible(v.asignado);
-  const tramo = v.tramo ?? v.horas;
+  pintarDisponible(nombre);
   if (sim[mes]) sim[mes].atendidas += tramo;
-  // si fue avance parcial, lo que falta queda pendiente
-  if (v.restante > 0.01) { v.horas = v.restante; v.restante = 0; }
-  // "-30 h" flotando sobre el escritorio
-  const t = txt(p.x, p.y-44, "−" + fmt(tramo) + " h" + (v.horas !== tramo && v.destino === "espera" ? " (avance)" : "") + (v.apoyo ? " 🤝" : ""), {"text-anchor":"middle", "font-size":13, "font-weight":700, fill: v.tipo==="inc" ? "var(--inc)" : "var(--req)"}, d.fx);
+  v.horas -= tramo;   // lo que queda del pedido
+  const t = txt(p.x, p.y-44, "−" + (tramo < 10 ? tramo.toFixed(1) : fmt(tramo)) + " h" + (tgt.parcial ? " (avance)" : "") + (tgt.apoyo ? " 🤝" : ""),
+                {"text-anchor":"middle", "font-size":13, "font-weight":700, fill: v.tipo==="inc" ? "var(--inc)" : "var(--req)"}, d.fx);
   let y = 0; const iv = setInterval(() => { y -= 1; t.setAttribute("transform", `translate(0,${y})`); t.setAttribute("opacity", 1 + y/30); if (y < -30) { clearInterval(iv); t.remove(); } }, 40);
 }
 
@@ -620,7 +627,7 @@ function tick(now){
         v.showAt = inicio; v.waitUntil = robotBusy;
         accionRobot(v);
       } else if (tgt.accion === "jefe") { v.bubble.setAttribute("opacity", 0); v.waitUntil = now + tgt.wait / speed; accionJefe(v); }
-      else if (tgt.accion === "entregar") { v.waitUntil = now + tgt.wait / speed; entregar(v); }
+      else if (tgt.accion === "entregar") { v.waitUntil = now + tgt.wait / speed; entregar(v, tgt); }
       else if (tgt.accion === "sentar_espera") { espera.push(v); v.done = true; renderEspera(); renderTabla(); }
       else if (tgt.accion === "sentar_rech") { rechazados.push(v); v.done = true; renderRechazados(); }
     } else {
