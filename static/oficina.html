@@ -76,7 +76,6 @@
     <div id="meses"></div>
   </div>
   <div class="tabla" id="tablaH"></div>
-  <div class="tabla" id="tablaT"></div>
   <div class="tabla" id="tablaP"></div>
   <div class="tabla" id="tablaR"></div>
   <div class="legend">
@@ -577,21 +576,6 @@ function renderTabla(){
   document.getElementById("tablaH").innerHTML = `<div class="tit">Horas del equipo<small>lo que el equipo puede trabajar en el mes</small></div>` +
     filasH.map(([lbl, fn], i) => `<div class="lbl${i===filasH.length-1?" last":""}">${lbl}</div>` +
       D.resumen.map(r => fn(r).replace('class="', i===filasH.length-1 ? 'class="last ' : 'class="')).join("")).join("");
-
-  cuadro("tablaT", "Total del equipo", "proyectos + requerimientos + incidencias", {
-    sinDisp: true, saldoNota: "horas del equipo − demanda real − pendiente anterior",
-    dispNota: "",
-    disp: r => r.horas_netas,
-    proy: r => r.horas_proyectos + r.horas_req_inc_plan,
-    realNota: "proyectos + pedidos que llegaron (simulación)",
-    real: r => sim[r.mes] ? r.horas_proyectos + sim[r.mes].reales : null,
-    pendIn: r => sim[r.mes] ? CASCADA[r.mes].pendIn + pendAnteriorR(r.mes) : null,
-    saldo: r => (!sim[r.mes] || enCurso(r)) ? null : r.horas_netas - r.horas_proyectos - sim[r.mes].reales - CASCADA[r.mes].pendIn - pendAnteriorR(r.mes),
-    pendNota: "simulación · gris = estimado del modelo",
-    pendOut: r => CASCADA[r.mes].pendOut + reqPendOut(r),
-    pendGris: r => !simulado(r),
-    terceros: r => Math.ceil(Math.max(0, r.horas_proyectos + r.horas_req_inc_plan - r.horas_netas) / h3 - 1e-9),
-  });
 
   cuadro("tablaP", "Proyectos", "TI + transformacionales · tienen prioridad sobre los pedidos", {
     sinDisp: true, saldoNota: "horas del equipo − demanda real − pendiente anterior",
