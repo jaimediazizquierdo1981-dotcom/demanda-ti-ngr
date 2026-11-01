@@ -533,6 +533,9 @@ function renderTabla(){
   const pedidosReales = r => sim[r.mes] ? sim[r.mes].reales - proyM(r) : null;
   const enCurso = r => sim[r.mes] && !sim[r.mes].cerrado && r.mes === mes;
   const filas = [
+    ['Demanda proyectada<small>modelo: proyectos + req. + inc.</small>', r => val(fmt(r.demanda_total_plan), cur(r))],
+    ['Demanda real<small>simulación: proyectos + pedidos que llegaron</small>', r => sim[r.mes] ? val(fmt(sim[r.mes].reales), cur(r)) : val("—", "na" + cur(r))],
+    ['Desvío de la demanda<small>real − proyectada (+ = llegó más de lo previsto)</small>', r => { if (!sim[r.mes]) return val("—", "na" + cur(r)); const d = sim[r.mes].reales - r.demanda_total_plan; return val((d>0?"+":"") + fmt(d), (d>0?"neg":"pos") + cur(r)); }],
     ['Horas del equipo<small>ya sin vacaciones, descansos ni gestión de jefes</small>', r => val(fmt(r.horas_netas), cur(r))],
     ['− Proyectos (TI + transformacionales)', r => val(fmt(proyM(r)), cur(r))],
     ['= Libres para req. e incidencias', r => { const l = libres(r); return val(fmt(l), (l<0?"neg":"") + cur(r)); }],
