@@ -407,7 +407,7 @@ function buildTimeline(){
       <div class="bar"><i style="height:${u/1.5*100}%;background:${colorUtil(r.utilizacion)}"></i><b style="bottom:${100/1.5}%"></b></div>
       <span>${r.mes_nombre}</span><small>${pct(r.utilizacion)}</small></button>`;
   }).join("");
-  c.querySelectorAll(".mes").forEach(b => b.onclick = () => { sim = {}; espera = []; setMes(+b.dataset.m); });
+  c.querySelectorAll(".mes").forEach(b => b.onclick = () => irAMes(+b.dataset.m));
 }
 
 function setMes(m, continuar = false){
@@ -455,6 +455,64 @@ function reingresar(tipo, horas, look, sq, k){
              x: silla.x, y: silla.y, i: 0, waitUntil: performance.now() + 300 * k, path: [{x:jd.x+44, y:jd.y+26, wait:600, accion:"jefe"}]};
   g.setAttribute("transform", `translate(${v.x},${v.y})`);
   visitors.push(v);
+}
+
+// ---------- Simulación rápida (sin animación) de los meses anteriores ----------
+function disponiblesMes(m){
+  const proyMes = D.proyectos.filter(p => p.mes === m).reduce((t,p)=>t+p.horas,0);
+  const netas = {};
+  for (const nombre of Object.keys(DESKS)) {
+    const p = D.personas.find(x => x.persona === nombre);
+    const mm = p ? p.meses.find(x => x.mes === m) : null;
+    netas[nombre] = mm ? mm.horas_netas : 0;
+  }
+  const tot = Object.values(netas).reduce((a,b)=>a+b,0) || 1;
+  const disp = {};
+  for (const n in netas) disp[n] = netas[n] - proyMes * netas[n] / tot;
+  return {disp, proyMes};
+}
+function asignarRapido(disp, sq, horas){  // misma regla que el jefe en la animación
+  const todos = Object.keys(DESKS);
+  const orden = (a,b) => (deskInfo[a]?.rol==="Jefe") - (deskInfo[b]?.rol==="Jefe") || disp[b] - disp[a];
+  const completo = todos.filter(n => DESKS[n].sq === sq && disp[n] >= horas).sort(orden)[0]
+                || todos.filter(n => DESKS[n].sq !== sq && disp[n] >= horas).sort(orden)[0];
+  if (completo) { disp[completo] -= horas; return 0; }
+  let falta = horas;
+  todos.filter(n => disp[n] > 0.05).sort((a,b) => (DESKS[a].sq !== sq) - (DESKS[b].sq !== sq) || disp[b] - disp[a])
+    .forEach(n => { if (falta > 0.05) { const h = Math.min(falta, disp[n]); disp[n] -= h; falta -= h; } });
+  return Math.max(0, falta);
+}
+function simularMesRapido(m, arrastre){
+  const r = rowMes(m);
+  const {disp, proyMes} = disponiblesMes(m);
+  const res = {reales: proyMes, atendidas: proyMes, pendiente: 0, cerrado: true};
+  const pendientes = [];
+  const atender = (v) => {
+    const falta = asignarRapido(disp, v.sq, v.horas);
+    res.atendidas += v.horas - falta;
+    if (falta > 0.05) pendientes.push({...v, horas: falta});
+  };
+  arrastre.forEach(atender);   // primero lo que viene del mes anterior
+  const nuevos = [...Array(Math.round(r.req_esperados)).fill("req"), ...Array(Math.round(r.inc_esperadas)).fill("inc")].sort(() => Math.random() - .5);
+  nuevos.forEach(tipo => {
+    const tKey = tipo === "inc" ? "incidencia" : "requerimiento";
+    const nivel = sortear(D.mezcla[tKey]);
+    const v = {tipo, horas: D.horas_pedido[tKey][nivel], look: lookAleatorio(), sq: Math.random() < .55 ? 1 : 2};
+    res.reales += v.horas;
+    atender(v);
+  });
+  res.pendiente = pendientes.reduce((t,v)=>t+v.horas,0);
+  return {res, pendientes};
+}
+// Al hacer clic en un mes, se simulan antes todos los meses previos y se arrastra su pendiente
+function irAMes(m){
+  sim = {};
+  let arrastre = [];
+  for (let k = 1; k < m; k++) { const o = simularMesRapido(k, arrastre); sim[k] = o.res; arrastre = o.pendientes; }
+  espera = arrastre.map(v => ({...v}));
+  if (m === 1) { espera = []; setMes(1); return; }
+  mes = m - 1;           // el mes anterior queda cerrado con su pendiente
+  setMes(m, true);
 }
 
 function celdas(fn){ return D.resumen.map(r => fn(r)).join(""); }
